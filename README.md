@@ -45,7 +45,8 @@ const decoded = lsf.decode(encoded);
 | Problem | JSON | LSF |
 |---------|------|-----|
 | LLM Parse Errors | 18% fail rate | 3% fail rate |
-| Token Efficiency | Baseline | 24% smaller |
+| Token Efficiency | Baseline | 52% fewer tokens |
+| Complex Data Structures | Baseline | 83% fewer tokens |
 | Error Recovery | Complete failure | Graceful degradation |
 | Nest complexity | Unlimited recursion | Flat only |
 
@@ -60,12 +61,20 @@ const decoded = lsf.decode(encoded);
 
 - [Python](./implementations/python/)
 - [JavaScript/TypeScript](./implementations/javascript/)
-- [C#](./implementations/csharp/)
+- [C#](./implementations/csharp/) (Coming Soon)
 - [Rust](./implementations/rust/) (Coming Soon)
 
 ## 🏃‍♂️ Benchmarks
 
-See [performance comparisons](./docs/BENCHMARKS.md) between LSF and JSON when used with various LLM models.
+Our [benchmarking tools](./implementations/javascript/benchmarks/) have revealed:
+
+- **Token Efficiency**: LSF uses 52% fewer tokens on average compared to JSON
+- **Complex Data**: For deeply nested structures, LSF is up to 83% more token-efficient
+- **Performance**: LSF encoding performance improves with data complexity:
+  - Small datasets: LSF is slower than JSON
+  - Large, complex datasets: LSF encoding can be faster than JSON
+
+View detailed results in the [benchmarks README](./implementations/javascript/benchmarks/README.md).
 
 ## 🤝 Contributing
 
