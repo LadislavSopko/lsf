@@ -7,6 +7,25 @@
 
 import { LSFDocument } from './types';
 
+// Character code constants for faster comparisons
+const CHAR_CODE = {
+  DOLLAR: 36,    // $
+  SECTION: 167,  // §
+  O: 111,        // o 
+  F: 102,        // f
+  R: 114,        // r
+  L: 108,        // l
+  T: 116,        // t
+  V: 118,        // v
+  N: 110,        // n
+  B: 98,         // b
+  D: 100,        // d
+  SPACE: 32,     // Space
+  TAB: 9,        // Tab
+  CR: 13,        // Carriage return
+  LF: 10         // Line feed
+};
+
 /**
  * HyperFastLSFParser provides maximum performance parsing for LSF v1.3
  * through direct character-by-character parsing with minimal function calls.
@@ -40,12 +59,14 @@ export class HyperFastLSFParser {
     
     while (pos < this.inputLength) {
       // Fast token detection
-      if (this.input[pos] === '$' && pos + 2 < this.inputLength && this.input[pos + 2] === '§') {
+      if (this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
+          pos + 2 < this.inputLength && 
+          this.input.charCodeAt(pos + 2) === CHAR_CODE.SECTION) {
         // Get token type
-        const tokenChar = this.input[pos + 1];
+        const tokenChar = this.input.charCodeAt(pos + 1);
         
         switch (tokenChar) {
-          case 'o': {
+          case CHAR_CODE.O: {
             // Object start: $o§
             pos += 3; // Skip token
             const objectNameStart = pos;
@@ -53,10 +74,10 @@ export class HyperFastLSFParser {
             // Find end of object name (until $r§)
             while (
               pos < this.inputLength && 
-              !(this.input[pos] === '$' && 
+              !(this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
                 pos + 2 < this.inputLength && 
-                this.input[pos + 1] === 'r' && 
-                this.input[pos + 2] === '§')
+                this.input.charCodeAt(pos + 1) === CHAR_CODE.R && 
+                this.input.charCodeAt(pos + 2) === CHAR_CODE.SECTION)
             ) {
               pos++;
             }
@@ -70,7 +91,7 @@ export class HyperFastLSFParser {
             break;
           }
           
-          case 'f': {
+          case CHAR_CODE.F: {
             // Field separator: $f§
             pos += 3; // Skip token
             
@@ -82,12 +103,12 @@ export class HyperFastLSFParser {
             // Extract value until next token ($r§, $t§, or $l§)
             while (
               pos < this.inputLength && 
-              !(this.input[pos] === '$' && 
+              !(this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
                 pos + 2 < this.inputLength && 
-                (this.input[pos + 1] === 'r' || 
-                 this.input[pos + 1] === 't' || 
-                 this.input[pos + 1] === 'l') && 
-                this.input[pos + 2] === '§')
+                (this.input.charCodeAt(pos + 1) === CHAR_CODE.R || 
+                 this.input.charCodeAt(pos + 1) === CHAR_CODE.T || 
+                 this.input.charCodeAt(pos + 1) === CHAR_CODE.L) && 
+                this.input.charCodeAt(pos + 2) === CHAR_CODE.SECTION)
             ) {
               pos++;
             }
@@ -96,10 +117,12 @@ export class HyperFastLSFParser {
             value = this.input.substring(valueStart, pos);
             
             // Check what token we encountered
-            if (pos < this.inputLength && this.input[pos] === '$' && pos + 2 < this.inputLength) {
-              const nextTokenChar = this.input[pos + 1];
+            if (pos < this.inputLength && 
+                this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
+                pos + 2 < this.inputLength) {
+              const nextTokenChar = this.input.charCodeAt(pos + 1);
               
-              if (nextTokenChar === 'l') {
+              if (nextTokenChar === CHAR_CODE.L) {
                 // List separator: $l§
                 let listValues = [value];
                 pos += 3; // Skip token
@@ -107,21 +130,21 @@ export class HyperFastLSFParser {
                 // Process the list elements
                 while (
                   pos < this.inputLength && 
-                  !(this.input[pos] === '$' && 
+                  !(this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
                     pos + 2 < this.inputLength && 
-                    this.input[pos + 1] === 'r' && 
-                    this.input[pos + 2] === '§')
+                    this.input.charCodeAt(pos + 1) === CHAR_CODE.R && 
+                    this.input.charCodeAt(pos + 2) === CHAR_CODE.SECTION)
                 ) {
                   const listItemStart = pos;
                   
                   // Find the end of this list item
                   while (
                     pos < this.inputLength && 
-                    !(this.input[pos] === '$' && 
+                    !(this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
                       pos + 2 < this.inputLength && 
-                      (this.input[pos + 1] === 'l' || 
-                       this.input[pos + 1] === 'r') && 
-                      this.input[pos + 2] === '§')
+                      (this.input.charCodeAt(pos + 1) === CHAR_CODE.L || 
+                       this.input.charCodeAt(pos + 1) === CHAR_CODE.R) && 
+                      this.input.charCodeAt(pos + 2) === CHAR_CODE.SECTION)
                   ) {
                     pos++;
                   }
@@ -131,16 +154,16 @@ export class HyperFastLSFParser {
                   
                   // Check if we hit the end or another list separator
                   if (pos < this.inputLength && 
-                      this.input[pos] === '$' && 
+                      this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
                       pos + 2 < this.inputLength && 
-                      this.input[pos + 1] === 'l' && 
-                      this.input[pos + 2] === '§') {
+                      this.input.charCodeAt(pos + 1) === CHAR_CODE.L && 
+                      this.input.charCodeAt(pos + 2) === CHAR_CODE.SECTION) {
                     pos += 3; // Skip the $l§ and continue
                   }
                 }
                 
                 value = listValues;
-              } else if (nextTokenChar === 't') {
+              } else if (nextTokenChar === CHAR_CODE.T) {
                 // Type marker: $t§
                 pos += 3; // Skip token
                 const typeStart = pos;
@@ -148,10 +171,10 @@ export class HyperFastLSFParser {
                 // Find the end of the type code
                 while (
                   pos < this.inputLength && 
-                  !(this.input[pos] === '$' && 
+                  !(this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
                     pos + 2 < this.inputLength && 
-                    this.input[pos + 1] === 'r' && 
-                    this.input[pos + 2] === '§')
+                    this.input.charCodeAt(pos + 1) === CHAR_CODE.R && 
+                    this.input.charCodeAt(pos + 2) === CHAR_CODE.SECTION)
                 ) {
                   pos++;
                 }
@@ -163,10 +186,10 @@ export class HyperFastLSFParser {
               
               // Skip the $r§ token
               if (pos < this.inputLength && 
-                  this.input[pos] === '$' && 
+                  this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
                   pos + 2 < this.inputLength && 
-                  this.input[pos + 1] === 'r' && 
-                  this.input[pos + 2] === '§') {
+                  this.input.charCodeAt(pos + 1) === CHAR_CODE.R && 
+                  this.input.charCodeAt(pos + 2) === CHAR_CODE.SECTION) {
                 pos += 3;
               }
             }
@@ -180,22 +203,22 @@ export class HyperFastLSFParser {
             break;
           }
           
-          case 'r': {
+          case CHAR_CODE.R: {
             // Record end: $r§
             pos += 3; // Skip token
             break;
           }
           
-          case 'v': {
+          case CHAR_CODE.V: {
             // Version marker: $v§ - skip until next $r§
             pos += 3; // Skip token
             
             while (
               pos < this.inputLength && 
-              !(this.input[pos] === '$' && 
+              !(this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
                 pos + 2 < this.inputLength && 
-                this.input[pos + 1] === 'r' && 
-                this.input[pos + 2] === '§')
+                this.input.charCodeAt(pos + 1) === CHAR_CODE.R && 
+                this.input.charCodeAt(pos + 2) === CHAR_CODE.SECTION)
             ) {
               pos++;
             }
@@ -212,17 +235,17 @@ export class HyperFastLSFParser {
             pos += 3;
             break;
         }
-      } else if (currentObject !== null && currentKey === null && !this.isWhitespace(this.input[pos])) {
+      } else if (currentObject !== null && currentKey === null && !this.isWhitespace(this.input.charCodeAt(pos))) {
         // Field key (not in a token and not whitespace)
         const keyStart = pos;
         
         // Read until field separator
         while (
           pos < this.inputLength && 
-          !(this.input[pos] === '$' && 
+          !(this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
             pos + 2 < this.inputLength && 
-            this.input[pos + 1] === 'f' && 
-            this.input[pos + 2] === '§')
+            this.input.charCodeAt(pos + 1) === CHAR_CODE.F && 
+            this.input.charCodeAt(pos + 2) === CHAR_CODE.SECTION)
         ) {
           pos++;
         }
@@ -241,8 +264,11 @@ export class HyperFastLSFParser {
   /**
    * Fast whitespace check
    */
-  private isWhitespace(char: string): boolean {
-    return char === ' ' || char === '\n' || char === '\t' || char === '\r';
+  private isWhitespace(charCode: number): boolean {
+    return charCode === CHAR_CODE.SPACE || 
+           charCode === CHAR_CODE.LF || 
+           charCode === CHAR_CODE.TAB || 
+           charCode === CHAR_CODE.CR;
   }
   
   /**
