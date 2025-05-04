@@ -4,7 +4,7 @@
  * This module provides the decoder component for LSF (LLM-Safe Format).
  */
 
-import { LSFTypeHint, LSFDocument, LSFError, LSFParseOptions } from './types';
+import { LSFTypeCode, LSFDocument, LSFError, LSFParseOptions } from './types';
 
 /**
  * Decoder for LSF (LLM-Safe Format)
@@ -37,7 +37,7 @@ export class LSFDecoder {
      * @example
      * ```ts
      * const decoder = new LSFDecoder();
-     * const data = decoder.decode("$o§user$r§$f§id$f§123$r§$f§name$f§John$r§");
+     * const data = decoder.decode("$o§user$r§id$f§123$r§name$f§John$r§");
      * // Returns: { user: { id: '123', name: 'John' } }
      * ```
      */
@@ -50,7 +50,7 @@ export class LSFDecoder {
         const parts: string[] = [];
         let i = 0;
         while (i < lsfString.length) {
-            if (["$o§", "$f§", "$t§", "$e§", "$x§", "$v§"].includes(lsfString.slice(i, i + 3))) {
+            if (["$o§", "$f§", "$t§", "$v§"].includes(lsfString.slice(i, i + 3))) {
                 parts.push(lsfString.slice(i, i + 3));
                 i += 3;
             } else if (lsfString.slice(i, i + 3) === "$r§") {
@@ -64,6 +64,15 @@ export class LSFDecoder {
                 parts.push(lsfString.slice(i, i + 3));
                 i += 3;
             } else {
+                // Check for invalid tokens that might indicate malformed input
+                if (lsfString[i] === '$' && lsfString.slice(i, i + 3).match(/\$[a-z]\§/)) {
+                    const invalidToken = lsfString.slice(i, i + 3);
+                    const error = new Error(`Invalid token: ${invalidToken} at position ${i}`);
+                    this.recordError(error, lsfString.slice(i, i + 10));
+                    if (!this.options.continueOnError) {
+                        throw error;
+                    }
+                }
                 parts.push(lsfString[i]);
                 i++;
             }
@@ -82,43 +91,41 @@ export class LSFDecoder {
                     // New object
                     currentObj = record.slice(3);
                     result[currentObj] = {};
-                } else if (record.startsWith('$t§') && currentObj) {
-                    // Typed field
-                    const parts = record.slice(3).split('$f§', 3);
-                    if (parts.length === 3) {
-                        const [typeHint, key, value] = parts;
-                        if (this.options.autoConvertTypes) {
-                            result[currentObj][key] = this.convertTypedValue(typeHint as LSFTypeHint, value);
-                        } else {
-                            result[currentObj][key] = value;
+                } else if (record.includes('$f§') && currentObj) {
+                    // Field (key$f§value) or (key$f§value$t§type)
+                    const [key, valueWithType] = record.split('$f§', 2);
+                    
+                    if (valueWithType !== undefined) {
+                        // Handle typed values (key$f§value$t§type format)
+                        if (valueWithType.includes('$t§')) {
+                            const [value, typeCode] = valueWithType.split('$t§');
+                            
+                            if (this.options.autoConvertTypes) {
+                                result[currentObj][key] = this.convertTypedValue(typeCode as LSFTypeCode, value);
+                            } else {
+                                result[currentObj][key] = value;
+                            }
+                        }
+                        // Handle lists
+                        else if (valueWithType.includes('$l§')) {
+                            result[currentObj][key] = valueWithType.split('$l§');
+                        }
+                        // Regular value
+                        else {
+                            result[currentObj][key] = valueWithType;
                         }
                     }
-                } else if (record.startsWith('$f§') && currentObj) {
-                    // Regular field or list
-                    const parts = record.slice(3).split('$f§', 2);
-                    if (parts.length === 2) {
-                        const [key, value] = parts;
-                        if (value.includes('$l§')) {
-                            // List field
-                            result[currentObj][key] = value.split('$l§');
-                        } else {
-                            // Regular field
-                            result[currentObj][key] = value;
-                        }
+                } else if (record.includes('$invalid') || record.match(/\$[a-z]\§/)) {
+                    // Clearly malformed record, record an error
+                    const error = new Error(`Malformed record: ${record}`);
+                    this.recordError(error, record);
+                    if (!this.options.continueOnError) {
+                        throw error;
                     }
-                } else if (record.startsWith('$e§')) {
-                    // Error marker
-                    this.errors.push({
-                        message: record.slice(3)
-                    });
                 }
-                // We ignore transaction markers ($x§) during decoding
+                // We ignore version markers during decoding
             } catch (e) {
-                const errorMessage = e instanceof Error ? e.message : String(e);
-                this.errors.push({
-                    message: `Error parsing record: ${errorMessage}`,
-                    record
-                });
+                this.recordError(e, record);
                 
                 if (!this.options.continueOnError) {
                     throw e;
@@ -139,31 +146,43 @@ export class LSFDecoder {
     }
     
     /**
-     * Convert a value based on its type hint
+     * Convert a value based on its type code
      * 
-     * @param typeHint The type hint string
+     * @param typeCode The type code character
      * @param value The value to convert
      * @returns The converted value
-     * @throws Error if typeHint is not recognized
+     * @throws Error if typeCode is not recognized
      */
-    private convertTypedValue(typeHint: LSFTypeHint, value: string): any {
-        switch (typeHint) {
-            case 'int':
+    private convertTypedValue(typeCode: LSFTypeCode, value: string): any {
+        switch (typeCode) {
+            case 'n':
                 return parseInt(value, 10);
-            case 'float':
+            case 'f':
                 return parseFloat(value);
-            case 'bool':
+            case 'b':
                 return value.toLowerCase() === 'true';
-            case 'null':
-                return null;
-            case 'bin':
-                return typeof Buffer !== 'undefined'
-                    ? Buffer.from(value, 'base64')
-                    : Uint8Array.from(atob(value), c => c.charCodeAt(0));
-            case 'str':
+            case 'd':
+                return new Date(value);
+            case 's':
                 return value;
             default:
-                throw new Error(`Unknown type hint: ${typeHint}`);
+                const error = new Error(`Unknown type code: ${typeCode}`);
+                this.recordError(error, `$t§${typeCode}`);
+                if (!this.options.continueOnError) {
+                    throw error;
+                }
+                return value;
         }
+    }
+    
+    /**
+     * Record an error for later retrieval
+     */
+    private recordError(error: unknown, record?: string): void {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.errors.push({
+            message: errorMessage,
+            record
+        });
     }
 } 

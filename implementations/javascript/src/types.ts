@@ -3,14 +3,14 @@
  */
 
 /**
- * Type hints used in LSF format
+ * Type codes used in LSF v1.3 format
  */
-export type LSFTypeHint = 'int' | 'float' | 'bool' | 'null' | 'bin' | 'str';
+export type LSFTypeCode = 'n' | 'f' | 'b' | 'd' | 's';
 
 /**
  * LSF value types that can be serialized
  */
-export type LSFValue = string | number | boolean | null | undefined | Buffer | Uint8Array | LSFValue[];
+export type LSFValue = string | number | boolean | null | undefined | Date | Buffer | Uint8Array | LSFValue[];
 
 /**
  * Object structure for LSF data
@@ -62,4 +62,9 @@ export interface LSFEncodeOptions {
      * Whether to add a version marker to the output
      */
     includeVersion?: boolean;
+    
+    /**
+     * Whether to automatically detect types when encoding
+     */
+    detectTypes?: boolean;
 } 

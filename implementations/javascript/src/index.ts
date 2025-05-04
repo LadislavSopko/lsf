@@ -9,6 +9,8 @@ export { LSFEncoder } from './encoder';
 export { LSFDecoder } from './decoder';
 export { LSFSimple } from './simple';
 export { lsfToJson, lsfToJsonPretty } from './conversion';
-export { LSFTypeHint } from './types';
+export { LSFTypeCode } from './types';
+export { UltraFastLSFParser } from './fast-parser';
+export { getParser, parse, LSFParserType, type LSFParser } from './parser-factory';
 
-export const VERSION = '1.2.0'; 
+export const VERSION = '1.3.0'; 

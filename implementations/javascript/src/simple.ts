@@ -9,23 +9,40 @@ import { LSFEncoder } from './encoder';
 import { LSFDecoder } from './decoder';
 
 /**
+ * Options for the LSFSimple API
+ */
+export interface LSFSimpleOptions extends LSFEncodeOptions, LSFParseOptions {
+    /**
+     * Whether to automatically detect and encode type hints (default: true)
+     */
+    detectTypes?: boolean;
+}
+
+/**
  * Provides a simple API for encoding and decoding LSF format
  */
 export class LSFSimple {
     private encoder: LSFEncoder;
     private decoder: LSFDecoder;
-    private options: LSFEncodeOptions;
+    private options: LSFSimpleOptions;
     
     /**
      * Create a new LSF simple API instance
      * 
-     * @param encodeOptions Options for encoding LSF
-     * @param parseOptions Options for parsing LSF
+     * @param options Options for encoding and decoding LSF
      */
-    constructor(encodeOptions: LSFEncodeOptions = {}, parseOptions: LSFParseOptions = {}) {
+    constructor(options: LSFSimpleOptions = {}) {
+        // Split options into encoder and decoder options
+        const { autoConvertTypes, continueOnError, ...encodeOptions } = options;
+        
+        const parseOptions: LSFParseOptions = {
+            autoConvertTypes,
+            continueOnError
+        };
+        
         this.encoder = new LSFEncoder(encodeOptions);
         this.decoder = new LSFDecoder(parseOptions);
-        this.options = encodeOptions;
+        this.options = options;
     }
     
     /**
@@ -41,8 +58,11 @@ export class LSFSimple {
      * ```
      */
     public encode(data: LSFDocument): string {
+        // Extract only encoder options
+        const { autoConvertTypes, continueOnError, ...encodeOptions } = this.options;
+        
         // Reset the encoder state with the same options
-        this.encoder = new LSFEncoder(this.options);
+        this.encoder = new LSFEncoder(encodeOptions);
         
         // Encode each object
         for (const [objectName, objectData] of Object.entries(data)) {
@@ -62,7 +82,7 @@ export class LSFSimple {
      * @example
      * ```ts
      * const lsf = new LSFSimple();
-     * const data = lsf.decode("$o§user$r§$f§id$f§123$r§$f§name$f§John$r§");
+     * const data = lsf.decode("$o§user$r§id$f§123$t§n$r§name$f§John$r§");
      * ```
      */
     public decode(lsfString: string): LSFDocument {
@@ -96,23 +116,38 @@ export class LSFSimple {
      * @param value Field value
      */
     private encodeField(key: string, value: LSFValue): void {
+        // Skip null/undefined values entirely in v1.3
         if (value === null || value === undefined) {
-            this.encoder.addTypedField(key, null, 'null');
-        } else if (typeof value === 'number') {
+            return;
+        }
+        
+        // If detectTypes is false, use regular fields for everything
+        if (this.options.detectTypes === false) {
+            this.encoder.addField(key, value);
+            return;
+        }
+        
+        // Otherwise encode based on type
+        if (typeof value === 'number') {
             if (Number.isInteger(value)) {
-                this.encoder.addTypedField(key, value, 'int');
+                this.encoder.addTypedField(key, value, 'n');
             } else {
-                this.encoder.addTypedField(key, value, 'float');
+                this.encoder.addTypedField(key, value, 'f');
             }
         } else if (typeof value === 'boolean') {
-            this.encoder.addTypedField(key, value, 'bool');
+            this.encoder.addTypedField(key, value, 'b');
+        } else if (value instanceof Date) {
+            this.encoder.addTypedField(key, value, 'd');
         } else if (value instanceof Uint8Array || (typeof Buffer !== 'undefined' && value instanceof Buffer)) {
-            this.encoder.addTypedField(key, value, 'bin');
+            // Binary data is encoded as base64 without special type
+            this.encoder.addField(key, typeof Buffer !== 'undefined' ? 
+                (value as Buffer).toString('base64') : 
+                btoa(String.fromCharCode(...new Uint8Array(value as Uint8Array))));
         } else if (Array.isArray(value)) {
             this.encoder.addList(key, value);
-        } else if (typeof value === 'string' && (this.encoder as any).options?.explicitTypes) {
+        } else if (typeof value === 'string' && this.options.explicitTypes) {
             // If explicitTypes is enabled, use type hint for strings too
-            this.encoder.addTypedField(key, value, 'str');
+            this.encoder.addTypedField(key, value, 's');
         } else {
             this.encoder.addField(key, value);
         }

@@ -1,6 +1,6 @@
 # LSF for JavaScript/TypeScript
 
-A JavaScript/TypeScript implementation of the LSF (LLM-Safe Format) specification.
+A JavaScript/TypeScript implementation of the LSF (LLM-Safe Format) specification v1.3.
 
 ## Installation
 
@@ -24,7 +24,7 @@ const lsfString = encoder
     .addField('id', 123)
     .addField('name', 'John Doe')
     .addList('tags', ['admin', 'user'])
-    .addTypedField('verified', true, 'bool')
+    .addTypedField('verified', true, 'b')
     .toString();
 
 // Decoding LSF to JavaScript objects
@@ -62,16 +62,17 @@ const parsedData = lsf.decode(lsfString);
 
 ### Type Hints
 
-LSF supports explicit type hints for values:
+LSF supports explicit type hints for values with single-letter type codes:
 
 ```typescript
 const encoder = new LSFEncoder();
 const lsfString = encoder
     .startObject('data')
-    .addTypedField('count', 42, 'int')
-    .addTypedField('price', 19.99, 'float')
-    .addTypedField('active', true, 'bool')
-    .addTypedField('metadata', null, 'null')
+    .addTypedField('count', 42, 'n')     // Number (integer)
+    .addTypedField('price', 19.99, 'f')  // Float
+    .addTypedField('active', true, 'b')  // Boolean
+    .addTypedField('date', new Date(), 'd') // Date
+    .addTypedField('name', 'Test', 's')  // String (explicit)
     .toString();
 ```
 
@@ -86,23 +87,25 @@ const binaryData = Buffer.from([0x01, 0x02, 0x03, 0x04]);
 const encoder = new LSFEncoder();
 const lsfString = encoder
     .startObject('file')
-    .addTypedField('content', binaryData, 'bin')
+    .addField('content', binaryData) // Binary data is stored as base64 strings
     .toString();
 ```
 
-### Transactions
+### High-Performance Parser
 
-Group multiple objects in a transaction:
+For maximum parsing performance, LSF includes an optimized parser:
 
 ```typescript
-const encoder = new LSFEncoder();
-const lsfString = encoder
-    .startObject('user')
-    .addField('id', 123)
-    .startObject('profile')
-    .addField('name', 'John')
-    .endTransaction()
-    .toString();
+import { UltraFastLSFParser, getParser } from 'lsf-format';
+
+// Use directly
+const fastParser = new UltraFastLSFParser(lsfString);
+const data = fastParser.parse();
+
+// Or use the parser factory
+import { getParser, LSFParserType } from 'lsf-format';
+const parser = getParser(lsfString, LSFParserType.FAST);
+const result = parser.parse();
 ```
 
 ## Error Handling
@@ -123,6 +126,26 @@ try {
 } catch (e) {
   console.error('Critical parsing error:', e);
 }
+```
+
+## LSF to JSON Conversion
+
+Easily convert between LSF and JSON:
+
+```typescript
+import { lsfToJson } from 'lsf-format';
+
+// Convert LSF to JSON
+const jsonString = lsfToJson(lsfString);
+
+// With pretty printing
+const prettyJson = lsfToJson(lsfString, 2); // 2-space indentation
+
+// With custom replacer function
+const jsonWithReplacer = lsfToJson(lsfString, (key, value) => {
+  if (key === 'password') return undefined; // Remove password fields
+  return value;
+}, 2);
 ```
 
 ## Development

@@ -4,7 +4,7 @@
  * This module provides the encoder component for LSF (LLM-Safe Format).
  */
 
-import { LSFTypeHint, LSFValue, LSFEncodeOptions } from './types';
+import { LSFTypeCode, LSFValue, LSFEncodeOptions } from './types';
 import { VERSION } from './index';
 
 /**
@@ -59,7 +59,7 @@ export class LSFEncoder {
             return this.addTypedFieldWithAutoType(key, value);
         }
         
-        this.buffer.push(`$f§${key}$f§${String(value)}$r§`);
+        this.buffer.push(`${key}$f§${String(value)}$r§`);
         return this;
     }
     
@@ -68,38 +68,52 @@ export class LSFEncoder {
      * 
      * @param key The field key
      * @param value The field value
-     * @param typeHint One of: "int", "float", "bool", "null", "bin", "str"
+     * @param typeCode One of: "n", "f", "b", "d", "s" or legacy type names
      * @returns this for chaining
-     * @throws Error if no object has been started or typeHint is invalid
+     * @throws Error if no object has been started or typeCode is invalid
      */
-    public addTypedField(key: string, value: LSFValue, typeHint: LSFTypeHint): LSFEncoder {
+    public addTypedField(key: string, value: LSFValue, typeCode: string): LSFEncoder {
         if (this.currentObject === null) {
             throw new Error("No object started. Call startObject() first.");
         }
         
-        if (!["int", "float", "bool", "null", "bin", "str"].includes(typeHint)) {
-            throw new Error(`Invalid type hint: ${typeHint}`);
+        // Convert legacy type names to v1.3 single-letter codes
+        let typeCodeV1_3: LSFTypeCode;
+        switch (typeCode) {
+            case 'int': typeCodeV1_3 = 'n'; break;
+            case 'float': typeCodeV1_3 = 'f'; break;
+            case 'bool': typeCodeV1_3 = 'b'; break;
+            case 'null': return this; // Skip null fields
+            case 'bin': 
+                if (value instanceof Buffer || value instanceof Uint8Array) {
+                    this.buffer.push(`${key}$f§${value.toString('base64')}$r§`);
+                    return this;
+                }
+                throw new Error('Value must be Buffer or Uint8Array for binary fields');
+            case 'n': 
+            case 'f': 
+            case 'b': 
+            case 'd': 
+            case 's': 
+                typeCodeV1_3 = typeCode as LSFTypeCode;
+                break;
+            default:
+                throw new Error(`Invalid type code: ${typeCode}`);
         }
         
         let processedValue: string;
         
-        // Process value based on type hint
-        switch (typeHint) {
-            case 'bin':
-                if (value instanceof Buffer || value instanceof Uint8Array) {
-                    processedValue = value.toString('base64');
-                } else {
-                    throw new Error(`Value for '${key}' is not a binary type but type hint is 'bin'`);
-                }
-                break;
-            case 'null':
-                processedValue = '';
-                break;
-            default:
-                processedValue = String(value);
+        // Process value based on type code
+        if (value === null || value === undefined) {
+            // Skip this field entirely as null values are represented by field absence
+            return this;
+        } else if (typeCodeV1_3 === 'd' && value instanceof Date) {
+            processedValue = value.toISOString();
+        } else {
+            processedValue = String(value);
         }
         
-        this.buffer.push(`$t§${typeHint}$f§${key}$f§${processedValue}$r§`);
+        this.buffer.push(`${key}$f§${processedValue}$t§${typeCodeV1_3}$r§`);
         return this;
     }
     
@@ -118,33 +132,12 @@ export class LSFEncoder {
         
         if (!values || values.length === 0) {
             // Empty list
-            this.buffer.push(`$f§${key}$f§$r§`);
+            this.buffer.push(`${key}$f§$r§`);
         } else {
             const items = values.map(v => String(v)).join('$l§');
-            this.buffer.push(`$f§${key}$f§${items}$r§`);
+            this.buffer.push(`${key}$f§${items}$r§`);
         }
         
-        return this;
-    }
-    
-    /**
-     * Add an error message to the current object
-     * 
-     * @param message Error message
-     * @returns this for chaining
-     */
-    public addError(message: string): LSFEncoder {
-        this.buffer.push(`$e§${message}$r§`);
-        return this;
-    }
-    
-    /**
-     * End the current transaction
-     * 
-     * @returns this for chaining
-     */
-    public endTransaction(): LSFEncoder {
-        this.buffer.push(`$x§$r§`);
         return this;
     }
     
@@ -158,25 +151,30 @@ export class LSFEncoder {
     }
     
     /**
-     * Helper method to automatically determine type hint from value
+     * Helper method to automatically determine type code from value
      */
     private addTypedFieldWithAutoType(key: string, value: LSFValue): LSFEncoder {
         if (value === null || value === undefined) {
-            return this.addTypedField(key, null, 'null');
+            // Skip this field entirely as null values are represented by field absence
+            return this;
         } else if (typeof value === 'number') {
             if (Number.isInteger(value)) {
-                return this.addTypedField(key, value, 'int');
+                return this.addTypedField(key, value, 'n');
             } else {
-                return this.addTypedField(key, value, 'float');
+                return this.addTypedField(key, value, 'f');
             }
         } else if (typeof value === 'boolean') {
-            return this.addTypedField(key, value, 'bool');
+            return this.addTypedField(key, value, 'b');
+        } else if (value instanceof Date) {
+            return this.addTypedField(key, value, 'd');
         } else if (value instanceof Buffer || value instanceof Uint8Array) {
-            return this.addTypedField(key, value, 'bin');
+            // Binary data is stored as base64 strings with no special type code
+            this.buffer.push(`${key}$f§${value.toString('base64')}$r§`);
+            return this;
         } else if (Array.isArray(value)) {
             return this.addList(key, value);
         } else {
-            return this.addTypedField(key, value, 'str');
+            return this.addTypedField(key, value, 's');
         }
     }
 } 

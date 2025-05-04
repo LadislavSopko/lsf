@@ -1,0 +1,579 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LSF Format Benchmark Results</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+    pre {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .chart {
+      margin: 30px 0;
+    }
+    .bar-container {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+    }
+    .bar-label {
+      width: 300px;
+      text-align: right;
+      padding-right: 15px;
+      font-size: 14px;
+    }
+    .bar {
+      height: 25px;
+      background-color: #3498db;
+      border-radius: 4px;
+      position: relative;
+      min-width: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      box-sizing: border-box;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .bar.json {
+      background-color: #e74c3c;
+    }
+    .bar.lsf-standard {
+      background-color: #2980b9;
+    }
+    .bar.lsf-fast {
+      background-color: #27ae60;
+    }
+    .bar.lsf-auto {
+      background-color: #f39c12;
+    }
+    .bar-value {
+      margin-left: 10px;
+      font-size: 14px;
+      color: #333;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .legend {
+      display: flex;
+      margin: 20px 0;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-right: 15px;
+    }
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      border-radius: 4px;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+  </style>
+</head>
+<body>
+  <h1>LSF Format Benchmark Results</h1>
+  
+  <div class="card">
+    <h2>About</h2>
+    <p>
+      This report shows performance benchmarks for the LSF format TypeScript implementation. 
+      Comparisons are made between different LSF parser implementations and JSON as a baseline.
+    </p>
+    
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #e74c3c;"></div>
+        <div>JSON</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #2980b9;"></div>
+        <div>LSF Standard</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #27ae60;"></div>
+        <div>LSF Fast</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #f39c12;"></div>
+        <div>LSF Auto</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Small data encoding -->
+  <div class="section card">
+    <h2>Small Data Encoding</h2>
+    <p>Comparing encoding performance for small data objects (single user with basic fields)</p>
+    <div class="chart">
+      
+      <div class="bar-container">
+        <div class="bar-label">Encode small data (LSFSimple)</div>
+        <div class="bar lsf-standard" style="width: 100%">
+          
+        </div>
+        <div class="bar-value">0.0016 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">Encode small data (JSON.stringify)</div>
+        <div class="bar json" style="width: 25%">
+          
+        </div>
+        <div class="bar-value">0.0004 ms</div>
+      </div>
+    
+    </div>
+  </div>
+
+  <!-- Medium data encoding -->
+  <div class="section card">
+    <h2>Medium Data Encoding</h2>
+    <p>Comparing encoding performance for medium data objects (100 products with multiple fields)</p>
+    <div class="chart">
+      
+      <div class="bar-container">
+        <div class="bar-label">Encode medium data (LSFSimple)</div>
+        <div class="bar lsf-standard" style="width: 54.3640897755611%">
+          
+        </div>
+        <div class="bar-value">0.0218 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">Encode medium data (JSON.stringify)</div>
+        <div class="bar json" style="width: 100%">
+          
+        </div>
+        <div class="bar-value">0.0401 ms</div>
+      </div>
+    
+    </div>
+  </div>
+
+  <!-- Large data encoding -->
+  <div class="section card">
+    <h2>Large Data Encoding</h2>
+    <p>Comparing encoding performance for large data objects (1000 products, 100 users, 200 orders)</p>
+    <div class="chart">
+      
+      <div class="bar-container">
+        <div class="bar-label">Encode large data (LSFSimple)</div>
+        <div class="bar lsf-standard" style="width: 21.703155890751997%">
+          0.2964
+        </div>
+        <div class="bar-value">0.2964 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">Encode large data (JSON.stringify)</div>
+        <div class="bar json" style="width: 100%">
+          1.3657
+        </div>
+        <div class="bar-value">1.3657 ms</div>
+      </div>
+    
+    </div>
+  </div>
+
+  <!-- Small data decoding -->
+  <div class="section card">
+    <h2>Small Data Decoding</h2>
+    <p>Comparing decoding performance for small data objects</p>
+    <div class="chart">
+      
+      <div class="bar-container">
+        <div class="bar-label">Decode small data (LSFDecoder)</div>
+        <div class="bar lsf-standard" style="width: 100%">
+          
+        </div>
+        <div class="bar-value">0.0061 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">Decode small data (UltraFastLSFParser)</div>
+        <div class="bar lsf-fast" style="width: 52.459016393442624%">
+          
+        </div>
+        <div class="bar-value">0.0032 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">Decode small data (JSON.parse)</div>
+        <div class="bar json" style="width: 9.83606557377049%">
+          
+        </div>
+        <div class="bar-value">0.0006 ms</div>
+      </div>
+    
+    </div>
+  </div>
+
+  <!-- Medium data decoding -->
+  <div class="section card">
+    <h2>Medium Data Decoding</h2>
+    <p>Comparing decoding performance for medium data objects</p>
+    <div class="chart">
+      
+      <div class="bar-container">
+        <div class="bar-label">Decode medium data (LSFDecoder)</div>
+        <div class="bar lsf-standard" style="width: 100%">
+          0.1546
+        </div>
+        <div class="bar-value">0.1546 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">Decode medium data (UltraFastLSFParser)</div>
+        <div class="bar lsf-fast" style="width: 30.336351875808536%">
+          
+        </div>
+        <div class="bar-value">0.0469 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">Decode medium data (JSON.parse)</div>
+        <div class="bar json" style="width: 32.276843467011645%">
+          
+        </div>
+        <div class="bar-value">0.0499 ms</div>
+      </div>
+    
+    </div>
+  </div>
+
+  <!-- Large data decoding -->
+  <div class="section card">
+    <h2>Large Data Decoding</h2>
+    <p>Comparing decoding performance for large data objects</p>
+    <div class="chart">
+      
+      <div class="bar-container">
+        <div class="bar-label">Decode large data (LSFDecoder)</div>
+        <div class="bar lsf-standard" style="width: 100%">
+          2.3315
+        </div>
+        <div class="bar-value">2.3315 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">Decode large data (UltraFastLSFParser)</div>
+        <div class="bar lsf-fast" style="width: 37.996997641003645%">
+          0.8859
+        </div>
+        <div class="bar-value">0.8859 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">Decode large data (JSON.parse)</div>
+        <div class="bar json" style="width: 59.09929230109371%">
+          1.3779
+        </div>
+        <div class="bar-value">1.3779 ms</div>
+      </div>
+    
+    </div>
+  </div>
+
+  <!-- Parser factory -->
+  <div class="section card">
+    <h2>Parser Factory</h2>
+    <p>Comparing performance of different parser factory options with medium data</p>
+    <div class="chart">
+      
+      <div class="bar-container">
+        <div class="bar-label">Parser factory (STANDARD) with medium data</div>
+        <div class="bar lsf-standard" style="width: 100%">
+          0.1320
+        </div>
+        <div class="bar-value">0.1320 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">Parser factory (FAST) with medium data</div>
+        <div class="bar lsf-fast" style="width: 26.89393939393939%">
+          
+        </div>
+        <div class="bar-value">0.0355 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">Parser factory (AUTO) with medium data</div>
+        <div class="bar lsf-auto" style="width: 26.060606060606062%">
+          
+        </div>
+        <div class="bar-value">0.0344 ms</div>
+      </div>
+    
+    </div>
+  </div>
+
+  <!-- Round trip -->
+  <div class="section card">
+    <h2>Round Trip Performance</h2>
+    <p>Comparing full round-trip performance (encode + decode) with medium data</p>
+    <div class="chart">
+      
+      <div class="bar-container">
+        <div class="bar-label">LSF round-trip (medium data)</div>
+        <div class="bar lsf-standard" style="width: 100%">
+          0.1509
+        </div>
+        <div class="bar-value">0.1509 ms</div>
+      </div>
+    
+      <div class="bar-container">
+        <div class="bar-label">JSON round-trip (medium data)</div>
+        <div class="bar json" style="width: 58.714380384360496%">
+          
+        </div>
+        <div class="bar-value">0.0886 ms</div>
+      </div>
+    
+    </div>
+  </div>
+
+  <!-- All results table -->
+  <div class="section card">
+    <h2>All Benchmark Results</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Test</th>
+          <th>Average (ms)</th>
+          <th>Total (ms)</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+          <tr>
+            <td>Encode small data (LSFSimple)</td>
+            <td>0.0016</td>
+            <td>16.20</td>
+          </tr>
+        
+          <tr>
+            <td>Encode small data (JSON.stringify)</td>
+            <td>0.0004</td>
+            <td>3.72</td>
+          </tr>
+        
+          <tr>
+            <td>Encode medium data (LSFSimple)</td>
+            <td>0.0218</td>
+            <td>10.92</td>
+          </tr>
+        
+          <tr>
+            <td>Encode medium data (JSON.stringify)</td>
+            <td>0.0401</td>
+            <td>20.06</td>
+          </tr>
+        
+          <tr>
+            <td>Encode large data (LSFSimple)</td>
+            <td>0.2964</td>
+            <td>5.93</td>
+          </tr>
+        
+          <tr>
+            <td>Encode large data (JSON.stringify)</td>
+            <td>1.3657</td>
+            <td>27.31</td>
+          </tr>
+        
+          <tr>
+            <td>Decode small data (LSFDecoder)</td>
+            <td>0.0061</td>
+            <td>30.71</td>
+          </tr>
+        
+          <tr>
+            <td>Decode small data (UltraFastLSFParser)</td>
+            <td>0.0032</td>
+            <td>15.91</td>
+          </tr>
+        
+          <tr>
+            <td>Decode small data (JSON.parse)</td>
+            <td>0.0006</td>
+            <td>3.09</td>
+          </tr>
+        
+          <tr>
+            <td>Decode medium data (LSFDecoder)</td>
+            <td>0.1546</td>
+            <td>30.91</td>
+          </tr>
+        
+          <tr>
+            <td>Decode medium data (UltraFastLSFParser)</td>
+            <td>0.0469</td>
+            <td>9.38</td>
+          </tr>
+        
+          <tr>
+            <td>Decode medium data (JSON.parse)</td>
+            <td>0.0499</td>
+            <td>9.98</td>
+          </tr>
+        
+          <tr>
+            <td>Decode large data (LSFDecoder)</td>
+            <td>2.3315</td>
+            <td>23.31</td>
+          </tr>
+        
+          <tr>
+            <td>Decode large data (UltraFastLSFParser)</td>
+            <td>0.8859</td>
+            <td>8.86</td>
+          </tr>
+        
+          <tr>
+            <td>Decode large data (JSON.parse)</td>
+            <td>1.3779</td>
+            <td>13.78</td>
+          </tr>
+        
+          <tr>
+            <td>Parser factory (STANDARD) with medium data</td>
+            <td>0.1320</td>
+            <td>26.40</td>
+          </tr>
+        
+          <tr>
+            <td>Parser factory (FAST) with medium data</td>
+            <td>0.0355</td>
+            <td>7.11</td>
+          </tr>
+        
+          <tr>
+            <td>Parser factory (AUTO) with medium data</td>
+            <td>0.0344</td>
+            <td>6.88</td>
+          </tr>
+        
+          <tr>
+            <td>LSF round-trip (medium data)</td>
+            <td>0.1509</td>
+            <td>15.09</td>
+          </tr>
+        
+          <tr>
+            <td>JSON round-trip (medium data)</td>
+            <td>0.0886</td>
+            <td>8.86</td>
+          </tr>
+        
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Raw output -->
+  <div class="section card">
+    <h2>Raw Benchmark Output</h2>
+    <pre>====== LSF Format Performance Benchmarks ======
+LSF Version: 1.3.0
+==============================================
+
+
+Data Sizes for Comparison:
+Small data: 103 chars
+Medium data: 9965 chars
+Large data: 379.945 chars
+
+----- ENCODING BENCHMARKS -----
+Encode small data (LSFSimple): 16.20ms total, 0.0016ms per operation
+Encode small data (JSON.stringify): 3.72ms total, 0.0004ms per operation
+Format Size Comparison - Small Data:
+JSON: 103 chars, LSF: 113 chars, Difference: 9.7%
+Encode medium data (LSFSimple): 10.92ms total, 0.0218ms per operation
+Encode medium data (JSON.stringify): 20.06ms total, 0.0401ms per operation
+Format Size Comparison - Medium Data:
+JSON: 9965 chars, LSF: 3004 chars, Difference: -69.9%
+Encode large data (LSFSimple): 5.93ms total, 0.2964ms per operation
+Encode large data (JSON.stringify): 27.31ms total, 1.3657ms per operation
+Format Size Comparison - Large Data:
+JSON: 379945 chars, LSF: 39307 chars, Difference: -89.7%
+
+----- DECODING BENCHMARKS -----
+Decode small data (LSFDecoder): 30.71ms total, 0.0061ms per operation
+Decode small data (UltraFastLSFParser): 15.91ms total, 0.0032ms per operation
+Decode small data (JSON.parse): 3.09ms total, 0.0006ms per operation
+Decode medium data (LSFDecoder): 30.91ms total, 0.1546ms per operation
+Decode medium data (UltraFastLSFParser): 9.38ms total, 0.0469ms per operation
+Decode medium data (JSON.parse): 9.98ms total, 0.0499ms per operation
+Decode large data (LSFDecoder): 23.31ms total, 2.3315ms per operation
+Decode large data (UltraFastLSFParser): 8.86ms total, 0.8859ms per operation
+Decode large data (JSON.parse): 13.78ms total, 1.3779ms per operation
+
+----- PARSER FACTORY BENCHMARKS -----
+Parser factory (STANDARD) with medium data: 26.40ms total, 0.1320ms per operation
+Parser factory (FAST) with medium data: 7.11ms total, 0.0355ms per operation
+Parser factory (AUTO) with medium data: 6.88ms total, 0.0344ms per operation
+
+----- ROUND-TRIP BENCHMARKS -----
+LSF round-trip (medium data): 15.09ms total, 0.1509ms per operation
+JSON round-trip (medium data): 8.86ms total, 0.0886ms per operation
+
+====== BENCHMARK COMPLETE ======
+</pre>
+  </div>
+
+  <footer>
+    <p>Generated on 2025-05-04T07:08:34.410Z</p>
+  </footer>
+
+  <script>
+    // Add any interactive features here if needed
+  </script>
+</body>
+</html>
+  
