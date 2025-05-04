@@ -4,6 +4,13 @@
   "description": "LLM-Safe Format: A structured serialization format for LLMs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
@@ -11,7 +18,8 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint 'src/**/*.ts'",
     "prettier": "prettier --write 'src/**/*.ts'",
-    "docs": "typedoc --out docs src/index.ts"
+    "docs": "typedoc --out docs src/index.ts",
+    "bundle": "tsup src/index.ts --format cjs,esm --dts --minify --clean"
   },
   "keywords": [
     "serialization",
@@ -39,6 +47,7 @@
     "eslint-config-prettier": "^8.0.0",
     "eslint-plugin-prettier": "^4.0.0",
     "prettier": "^2.0.0",
+    "tsup": "^8.4.0",
     "typedoc": "^0.24.0",
     "typescript": "^5.0.0",
     "vitest": "^0.34.0"
@@ -48,4 +57,4 @@
     "README.md",
     "LICENSE"
   ]
-} 
+}

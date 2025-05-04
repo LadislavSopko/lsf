@@ -10,21 +10,50 @@ To build the package:
 # Install dependencies (if you haven't already)
 npm install
 
-# Build the TypeScript package
+# Build the TypeScript package (multi-file output)
 npm run build
+
+# OR build the bundled version (recommended for distribution)
+npm run bundle
 ```
 
-This creates the `dist` directory with compiled JavaScript files and TypeScript declaration files.
+The standard build (`npm run build`) creates the `dist` directory with individually compiled JavaScript files and TypeScript declaration files. The bundled build (`npm run bundle`) creates optimized single-file bundles for different module systems.
+
+## Bundled vs. Standard Build
+
+The package can be built in two ways:
+
+### Standard Build (Multiple Files)
+- Run with `npm run build`
+- Creates separate files for each module
+- Good for debugging and development
+- More granular file access
+
+### Bundled Build (Single Files)
+- Run with `npm run bundle`
+- Creates optimized single file bundles:
+  - `index.js` - CommonJS bundle (for Node.js require)
+  - `index.mjs` - ESM bundle (for ES modules)
+  - `index.d.ts` and `index.d.mts` - TypeScript declarations
+- Advantages:
+  - Smaller overall package size due to minification
+  - Simpler imports for users
+  - Better tree-shaking in applications
+  - Supports both CommonJS and ESM usage patterns
 
 ## Verifying the Build
 
-You can verify that the build works correctly by running the verification script:
+You can verify that the build works correctly by running the verification scripts:
 
 ```bash
+# For standard build
 node verify-build.js
+
+# For bundled build
+node verify-bundle.js
 ```
 
-This script imports the library from the `dist` directory and demonstrates the key functionality.
+These scripts import the library from the `dist` directory and demonstrate the key functionality.
 
 ## Running Tests
 
@@ -47,7 +76,7 @@ Before publishing to NPM, make sure to:
 
 1. Update the version number in `package.json` if needed
 2. Ensure all tests pass
-3. Build the package fresh with `npm run build`
+3. Build the package fresh with `npm run bundle` (recommended) or `npm run build`
 4. Check that the files to be included are correct in `package.json` (currently includes `dist`, `README.md`, and `LICENSE`)
 
 ## Publishing to NPM
@@ -93,7 +122,18 @@ This creates a symbolic link to the package, allowing you to test changes withou
 
 ## Package Structure
 
-The built package has the following structure:
+### Bundled Build Structure
+
+The bundled build creates these files:
+
+- `dist/index.js` - CommonJS bundle (for Node.js require)
+- `dist/index.mjs` - ESM bundle (for ES modules)
+- `dist/index.d.ts` - TypeScript declarations for CommonJS
+- `dist/index.d.mts` - TypeScript declarations for ESM
+
+### Standard Build Structure
+
+The standard build creates these files:
 
 - `dist/index.js` - Main entry point
 - `dist/index.d.ts` - TypeScript declarations
@@ -104,8 +144,8 @@ The built package has the following structure:
 
 - [ ] Update version in package.json
 - [ ] Run tests to ensure they pass
-- [ ] Build the package
-- [ ] Verify the build with the verification script
+- [ ] Build the bundled package with `npm run bundle`
+- [ ] Verify the bundled build with the verification script
 - [ ] Check the package.json files array for completeness
 - [ ] Publish to NPM
 - [ ] Create a git tag for the release
