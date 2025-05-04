@@ -14,6 +14,7 @@ import { LSFDecoder } from './decoder';
 export class LSFSimple {
     private encoder: LSFEncoder;
     private decoder: LSFDecoder;
+    private options: LSFEncodeOptions;
     
     /**
      * Create a new LSF simple API instance
@@ -24,6 +25,7 @@ export class LSFSimple {
     constructor(encodeOptions: LSFEncodeOptions = {}, parseOptions: LSFParseOptions = {}) {
         this.encoder = new LSFEncoder(encodeOptions);
         this.decoder = new LSFDecoder(parseOptions);
+        this.options = encodeOptions;
     }
     
     /**
@@ -39,8 +41,8 @@ export class LSFSimple {
      * ```
      */
     public encode(data: LSFDocument): string {
-        // Reset the encoder state
-        this.encoder = new LSFEncoder();
+        // Reset the encoder state with the same options
+        this.encoder = new LSFEncoder(this.options);
         
         // Encode each object
         for (const [objectName, objectData] of Object.entries(data)) {

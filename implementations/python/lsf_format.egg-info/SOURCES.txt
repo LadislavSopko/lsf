@@ -1,0 +1,16 @@
+README.md
+setup.py
+lsf/__init__.py
+lsf/conversion.py
+lsf/decoder.py
+lsf/encoder.py
+lsf/simple.py
+lsf_format.egg-info/PKG-INFO
+lsf_format.egg-info/SOURCES.txt
+lsf_format.egg-info/dependency_links.txt
+lsf_format.egg-info/requires.txt
+lsf_format.egg-info/top_level.txt
+tests/test_conversion.py
+tests/test_decoder.py
+tests/test_encoder.py
+tests/test_simple.py
