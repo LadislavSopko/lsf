@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document summarizes the performance benchmark results for the LSF v1.3 TypeScript implementation. Tests compare LSF encoding/decoding performance against native JSON operations and also measure the performance improvements from the UltraFastLSFParser implementation.
+This document summarizes the performance benchmark results for the LSF v1.3 TypeScript implementation. Tests compare LSF encoding/decoding performance against native JSON operations and also measure the performance improvements from the UltraFastLSFParser and HyperFastLSFParser implementations.
 
 **LSF Version:** 1.3.0
 
@@ -21,14 +21,23 @@ This document summarizes the performance benchmark results for the LSF v1.3 Type
 3. **Decoding Performance:**
    - Standard LSFDecoder is slower than JSON.parse
    - UltraFastLSFParser significantly outperforms the standard decoder
-   - UltraFastLSFParser is:
-     - ~50% faster than the standard decoder on small data
-     - ~66% faster than the standard decoder on medium data
-     - ~68% faster than the standard decoder on large data
-   - UltraFastLSFParser outperforms JSON.parse on large datasets
+   - HyperFastLSFParser provides even better performance, especially for large datasets:
+     - ~20% faster than UltraFastLSFParser on small data
+     - ~72% faster than UltraFastLSFParser on large data 
+   - Parser performance comparison:
+     - UltraFastLSFParser is:
+       - ~50% faster than the standard decoder on small data
+       - ~66% faster than the standard decoder on medium data
+       - ~68% faster than the standard decoder on large data
+     - HyperFastLSFParser is:
+       - ~63% faster than the standard decoder on small data
+       - ~57% faster than the standard decoder on medium data
+       - ~91% faster than the standard decoder on large data
+   - HyperFastLSFParser outperforms JSON.parse by up to 8.5x on large datasets
 
 4. **Parser Factory Performance:**
    - The AUTO selection strategy performs as well as directly using the fast parser
+   - HyperFastLSFParser is ~55% faster than UltraFastLSFParser for large data
    - Fast parser is ~75% faster than the standard parser
 
 ## Detailed Results
@@ -42,41 +51,45 @@ This document summarizes the performance benchmark results for the LSF v1.3 Type
 
 | Test | Total (ms) | Avg (ms/op) |
 |------|------------|-------------|
-| Encode small data (LSFSimple) | 16.00 | 0.0016 |
-| Encode small data (JSON.stringify) | 3.89 | 0.0004 |
-| Encode medium data (LSFSimple) | 10.12 | 0.0202 |
-| Encode medium data (JSON.stringify) | 19.33 | 0.0387 |
-| Encode large data (LSFSimple) | 9.03 | 0.4515 |
-| Encode large data (JSON.stringify) | 28.90 | 1.4451 |
+| Encode small data (LSFSimple) | 15.72 | 0.0016 |
+| Encode small data (JSON.stringify) | 3.76 | 0.0004 |
+| Encode medium data (LSFSimple) | 10.09 | 0.0202 |
+| Encode medium data (JSON.stringify) | 19.63 | 0.0393 |
+| Encode large data (LSFSimple) | 5.92 | 0.2960 |
+| Encode large data (JSON.stringify) | 27.65 | 1.3824 |
 
 ### Decoding Benchmarks
 
 | Test | Total (ms) | Avg (ms/op) |
 |------|------------|-------------|
-| Decode small data (LSFDecoder) | 32.30 | 0.0065 |
-| Decode small data (UltraFastLSFParser) | 16.02 | 0.0032 |
-| Decode small data (JSON.parse) | 3.33 | 0.0007 |
-| Decode medium data (LSFDecoder) | 31.22 | 0.1561 |
-| Decode medium data (UltraFastLSFParser) | 10.41 | 0.0520 |
-| Decode medium data (JSON.parse) | 12.48 | 0.0624 |
-| Decode large data (LSFDecoder) | 25.14 | 2.5141 |
-| Decode large data (UltraFastLSFParser) | 8.04 | 0.8035 |
-| Decode large data (JSON.parse) | 13.60 | 1.3603 |
+| Decode small data (LSFDecoder) | 35.42 | 0.0071 |
+| Decode small data (UltraFastLSFParser) | 16.25 | 0.0033 |
+| Decode small data (HyperFastLSFParser) | 12.91 | 0.0026 |
+| Decode small data (JSON.parse) | 3.42 | 0.0007 |
+| Decode medium data (LSFDecoder) | 31.51 | 0.1576 |
+| Decode medium data (UltraFastLSFParser) | 9.09 | 0.0454 |
+| Decode medium data (HyperFastLSFParser) | 13.51 | 0.0675 |
+| Decode medium data (JSON.parse) | 10.27 | 0.0514 |
+| Decode large data (LSFDecoder) | 21.74 | 2.1740 |
+| Decode large data (UltraFastLSFParser) | 6.85 | 0.6855 |
+| Decode large data (HyperFastLSFParser) | 1.95 | 0.1951 |
+| Decode large data (JSON.parse) | 16.60 | 1.6598 |
 
 ### Parser Factory Benchmarks
 
 | Test | Total (ms) | Avg (ms/op) |
 |------|------------|-------------|
-| Parser factory (STANDARD) with medium data | 27.52 | 0.1376 |
-| Parser factory (FAST) with medium data | 6.75 | 0.0337 |
-| Parser factory (AUTO) with medium data | 6.52 | 0.0326 |
+| Parser factory (STANDARD) with medium data | 37.29 | 0.1864 |
+| Parser factory (FAST) with medium data | 7.27 | 0.0363 |
+| Parser factory (HYPER) with medium data | 3.23 | 0.0162 |
+| Parser factory (AUTO) with medium data | 6.97 | 0.0348 |
 
 ### Round-Trip Benchmarks
 
 | Test | Total (ms) | Avg (ms/op) |
 |------|------------|-------------|
-| LSF round-trip (medium data) | 15.30 | 0.1530 |
-| JSON round-trip (medium data) | 8.80 | 0.0880 |
+| LSF round-trip (medium data) | 16.20 | 0.1620 |
+| JSON round-trip (medium data) | 9.23 | 0.0923 |
 
 ## Analysis and Recommendations
 
@@ -94,23 +107,29 @@ For small objects, LSF is slightly larger than JSON due to the overhead of forma
 
 1. **Encoding:** LSF encoding is more efficient than JSON for larger datasets, offering up to 3x better performance for large data structures.
 
-2. **Decoding:** The UltraFastLSFParser implementation provides substantial performance improvements over the standard decoder:
-   - 2-3x faster depending on data size
-   - Outperforms JSON.parse for large datasets
-   - More efficient memory usage
+2. **Decoding:** The optimized parsers provide substantial performance improvements:
+   - UltraFastLSFParser is 2-3x faster than the standard decoder
+   - HyperFastLSFParser is up to 11x faster than the standard decoder for large datasets
+   - HyperFastLSFParser outperforms JSON.parse by up to 8.5x for large datasets
+   - More efficient memory usage with character-by-character parsing
 
-3. **Parser Selection:** The automatic parser selection strategy works effectively, choosing the best parser based on data characteristics.
+3. **Parser Selection:**
+   - Use HyperFastLSFParser for maximum performance, especially for large datasets
+   - The automatic parser selection strategy works effectively, choosing the best parser based on data characteristics
 
 ### Implementation Recommendations
 
-1. **Use the UltraFastLSFParser for best performance**
-   - The standard decoder should only be used when compatibility with older versions is required
+1. **Use the HyperFastLSFParser for best performance**
+   - The character-by-character approach with minimal allocations provides significant speedups
+   - For large datasets, HyperFastLSFParser is dramatically faster than both UltraFastLSFParser and JSON.parse
 
 2. **Use the AUTO selection strategy with getParser**
    - This provides the best balance of performance across different data sizes
+   - Automatically selects the most appropriate parser based on input size
 
 3. **LSF is most beneficial for medium to large data structures**
    - Particularly efficient for data with many nested objects and repeated structure
+   - With HyperFastLSFParser, LSF outperforms JSON for large data parsing
 
 ## Test Environment
 

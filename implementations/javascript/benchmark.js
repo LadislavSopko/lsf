@@ -4,7 +4,7 @@
  * Measures performance of LSF encoding/decoding and compares with JSON
  */
 
-const { LSFEncoder, LSFDecoder, LSFSimple, UltraFastLSFParser, getParser, LSFParserType } = require('./dist/index');
+const { LSFEncoder, LSFDecoder, LSFSimple, UltraFastLSFParser, HyperFastLSFParser, getParser, LSFParserType } = require('./dist/index');
 
 // Utility for timing operations
 function benchmark(name, iterations, fn) {
@@ -207,6 +207,11 @@ async function runBenchmarks() {
     parser.parse();
   });
   
+  benchmark("Decode small data (HyperFastLSFParser)", 5000, () => {
+    const parser = new HyperFastLSFParser(smallLSF);
+    parser.parse();
+  });
+  
   benchmark("Decode small data (JSON.parse)", 5000, () => {
     JSON.parse(smallJSON);
   });
@@ -219,6 +224,11 @@ async function runBenchmarks() {
   
   benchmark("Decode medium data (UltraFastLSFParser)", 200, () => {
     const parser = new UltraFastLSFParser(mediumLSF);
+    parser.parse();
+  });
+  
+  benchmark("Decode medium data (HyperFastLSFParser)", 200, () => {
+    const parser = new HyperFastLSFParser(mediumLSF);
     parser.parse();
   });
   
@@ -237,6 +247,11 @@ async function runBenchmarks() {
     parser.parse();
   });
   
+  benchmark("Decode large data (HyperFastLSFParser)", 10, () => {
+    const parser = new HyperFastLSFParser(largeLSF);
+    parser.parse();
+  });
+  
   benchmark("Decode large data (JSON.parse)", 10, () => {
     JSON.parse(largeJSON);
   });
@@ -251,6 +266,11 @@ async function runBenchmarks() {
   
   benchmark("Parser factory (FAST) with medium data", 200, () => {
     const parser = getParser(mediumLSF, LSFParserType.FAST);
+    parser.parse();
+  });
+  
+  benchmark("Parser factory (HYPER) with medium data", 200, () => {
+    const parser = getParser(mediumLSF, LSFParserType.HYPER);
     parser.parse();
   });
   

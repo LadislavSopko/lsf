@@ -1,10 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { getParser, parse, LSFParserType, LSFParser } from '../src/parser-factory';
 import { UltraFastLSFParser } from '../src/fast-parser';
+import { HyperFastLSFParser } from '../src/hyper-fast-parser';
 
 describe('LSF Parser Factory', () => {
   const smallLSF = '$o§user$r§name$f§John$r§age$f§30$r§';
-  const largeLSF = `$o§data$r§${Array(1000).fill('key$f§value$r§').join('')}`;
+  // Medium-sized LSF for testing auto-selection between UltraFastLSFParser and standard parser
+  const mediumLSF = `$o§data$r§${Array(200).fill('key$f§value$r§').join('')}`;
+  // Very large LSF for testing auto-selection with HyperFastLSFParser
+  const largeLSF = `$o§data$r§${Array(2000).fill('key$f§value$r§').join('')}`;
   
   it('should create a standard parser', () => {
     const parser = getParser(smallLSF, LSFParserType.STANDARD);
@@ -35,19 +39,42 @@ describe('LSF Parser Factory', () => {
     });
   });
   
+  it('should create a hyper fast parser', () => {
+    const parser = getParser(smallLSF, LSFParserType.HYPER);
+    expect(parser).toBeDefined();
+    expect(typeof parser.parse).toBe('function');
+    expect(parser).toBeInstanceOf(HyperFastLSFParser);
+    
+    const result = parser.parse();
+    expect(result).toEqual({
+      user: {
+        name: 'John',
+        age: '30'
+      }
+    });
+  });
+  
   it('should auto-select parser based on input size', () => {
     // For small input
     const smallParser = getParser(smallLSF);
     expect(smallParser).toBeDefined();
     
-    // For large input
+    // For medium input (should use UltraFastLSFParser)
+    const mediumParser = getParser(mediumLSF);
+    expect(mediumParser).toBeDefined();
+    expect(mediumParser).toBeInstanceOf(UltraFastLSFParser);
+    
+    // For large input (should use HyperFastLSFParser)
     const largeParser = getParser(largeLSF);
     expect(largeParser).toBeDefined();
-    expect(largeParser).toBeInstanceOf(UltraFastLSFParser);
+    expect(largeParser).toBeInstanceOf(HyperFastLSFParser);
     
-    // Verify both parsers work
+    // Verify all parsers work
     const smallResult = smallParser.parse();
     expect(smallResult.user.name).toBe('John');
+    
+    const mediumResult = mediumParser.parse();
+    expect(mediumResult.data).toBeDefined();
     
     const largeResult = largeParser.parse();
     expect(largeResult.data).toBeDefined();
@@ -69,6 +96,9 @@ describe('LSF Parser Factory', () => {
     
     const resultFast = parse(smallLSF, LSFParserType.FAST);
     expect(resultFast.user.name).toBe('John');
+    
+    const resultHyper = parse(smallLSF, LSFParserType.HYPER);
+    expect(resultHyper.user.name).toBe('John');
     
     const resultAuto = parse(smallLSF, LSFParserType.AUTO);
     expect(resultAuto.user.name).toBe('John');

@@ -7,6 +7,7 @@
 import { LSFDocument } from './types';
 import { LSFDecoder } from './decoder';
 import { UltraFastLSFParser } from './fast-parser';
+import { HyperFastLSFParser } from './hyper-fast-parser';
 
 /**
  * Available parser types
@@ -18,9 +19,14 @@ export enum LSFParserType {
   STANDARD = 'standard',
   
   /**
-   * Ultra-fast LSF parser (best performance)
+   * Ultra-fast LSF parser (high performance)
    */
   FAST = 'fast',
+  
+  /**
+   * Hyper-fast LSF parser (maximum performance)
+   */
+  HYPER = 'hyper',
   
   /**
    * Automatically select the appropriate parser
@@ -72,6 +78,7 @@ export function getParser(
   // For small strings, standard parser might be more efficient
   // due to initialization overhead of UltraFastLSFParser
   const smallStringThreshold = 500;
+  const largeStringThreshold = 10000;
   
   switch (parserType) {
     case LSFParserType.STANDARD:
@@ -80,13 +87,18 @@ export function getParser(
     case LSFParserType.FAST:
       return new UltraFastLSFParser(lsfString);
       
+    case LSFParserType.HYPER:
+      return new HyperFastLSFParser(lsfString);
+      
     case LSFParserType.AUTO:
     default:
       // Auto-select based on input size
       if (lsfString.length < smallStringThreshold) {
         return new LSFDecoderAdapter(lsfString, options);
-      } else {
+      } else if (lsfString.length < largeStringThreshold) {
         return new UltraFastLSFParser(lsfString);
+      } else {
+        return new HyperFastLSFParser(lsfString);
       }
   }
 }
