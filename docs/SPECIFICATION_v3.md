@@ -248,6 +248,24 @@ Convert: [YOUR INPUT]
 
 ---
 
+## Token Efficiency vs. JSON (Hypothesized)
+
+While not rigorously benchmarked with tokenizers yet, LSF is expected to be significantly more token-efficient than JSON for LLM processing, based on the following:
+
+1.  **LSF**: Omits quotes around keys and simple values, commas, and structural characters (`{}[],:`). Uses few, short delimiters (`$o~`, `$f~`, `$v~`, `$t~`).
+2.  **JSON (Minified)**: Requires quotes around all keys and string values, plus structural characters and commas.
+3.  **JSON (Pretty-Printed)**: Includes all characters from minified JSON plus extensive whitespace (newlines, indentation), which consumes additional tokens.
+
+**Predicted Token Count Ranking (Lowest is best):**
+
+1.  **LSF (Most Efficient)**
+2.  **Minified JSON**
+3.  **Pretty-Printed JSON (Least Efficient)**
+
+The primary saving in LSF comes from eliminating the ubiquitous quotes and punctuation required by JSON.
+
+---
+
 ## Design Philosophy
 
 LSF v3.0 pushes simplicity to the extreme by recognizing that:
