@@ -4,6 +4,8 @@ using Newtonsoft.Json; // Add Newtonsoft.Json
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer; // For JObject
+using System;
+using System.Collections.Generic;
 
 namespace Zerox.LSF.Benchmarks
 {
@@ -12,8 +14,11 @@ namespace Zerox.LSF.Benchmarks
     [SimpleJob(RuntimeMoniker.Net90)] // Target .NET 9 as the project does
     public class ParseBenchmark
     {
-        // Add ParamsSource property
-        [ParamsSource(nameof(BenchmarkDataGenerator.GetDataSets))]
+        // Define a static property within this class to serve as the ParamsSource
+        public static IEnumerable<BenchmarkDataset> DataSets => BenchmarkDataGenerator.GetDataSets();
+
+        // Point ParamsSource to the local static property
+        [ParamsSource(nameof(DataSets))] 
         public BenchmarkDataset Dataset { get; set; }
 
         // --- Benchmarks --- 

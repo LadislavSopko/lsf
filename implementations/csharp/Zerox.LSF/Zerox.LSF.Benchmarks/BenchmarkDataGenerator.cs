@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using Zerox.LSF; // For LSFEncoder
@@ -61,38 +62,47 @@ namespace Zerox.LSF.Benchmarks
             return _smallDataCache;
         }
 
-        public static BenchmarkDataset GetMediumDataset(int complexityFactor = 1000) // complexityFactor determines size
+        public static BenchmarkDataset GetMediumDataset(int complexityFactor = 1000, int listSizeFactor = 10) // complexityFactor = # fields, listSizeFactor = size of lists
         {
-             if (_mediumDataCache != null)
-            {
-                return _mediumDataCache;
-            }
+             if (_mediumDataCache != null && _mediumDataCache.Name.Contains($"({complexityFactor},{listSizeFactor})")) // Check cache key includes factors
+             {
+                 return _mediumDataCache;
+             }
 
-            // Generate a more complex object (e.g., a list of dictionaries)
-            var mediumList = new List<Dictionary<string, object?>>(complexityFactor);
+            // Generate a single large, flat dictionary
+            var mediumObject = new Dictionary<string, object?>(complexityFactor * 2); // Estimate capacity
             var random = new Random(42); // Seed for reproducibility
+            var lipsum = "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua".Split(' ');
 
             for (int i = 0; i < complexityFactor; i++)
             {
-                mediumList.Add(new Dictionary<string, object?>
+                // Add various types of fields
+                mediumObject.Add($"Guid_{i}", Guid.NewGuid().ToString());
+                mediumObject.Add($"Index_{i}", i);
+                mediumObject.Add($"Timestamp_{i}", DateTime.UtcNow.AddSeconds(i).ToString("o"));
+                mediumObject.Add($"Value_{i}", random.NextDouble() * 1000);
+                mediumObject.Add($"IsEnabled_{i}", i % 2 == 0);
+                mediumObject.Add($"Notes_{i}", $"Note for item {i}: {string.Join(" ", lipsum.OrderBy(x => random.Next()).Take(10))}"); // Add some text
+                
+                // Add a list field (implicit array in LSF)
+                var subList = new List<object?>(listSizeFactor);
+                for(int j = 0; j < listSizeFactor; j++)
                 {
-                    { "Guid", Guid.NewGuid().ToString() },
-                    { "Index", i },
-                    { "Timestamp", DateTime.UtcNow.AddSeconds(i).ToString("o") }, // ISO 8601 format
-                    { "Value", random.NextDouble() * 1000 },
-                    { "IsEnabled", i % 2 == 0 },
-                    { "Notes", $"This is item number {i} with some random text: {Guid.NewGuid()}" },
-                    { "SubItems", new List<object?> { random.Next(100), null, Guid.NewGuid().ToString().Substring(0, 8), i % 3 == 0 } }
-                });
+                    subList.Add(random.Next(10000)); // Add numbers to the list
+                    if(j % 5 == 0) subList.Add(null); // Add some nulls
+                    if(j % 7 == 0) subList.Add(lipsum[random.Next(lipsum.Length)]); // Add some strings
+                }
+                mediumObject.Add($"SubItems_{i}", subList); 
             }
 
-            // Encode to LSF bytes
-            byte[] lsfBytes = LSFEncoder.EncodeToArray(mediumList);
+            // Encode the flat dictionary to LSF bytes
+            byte[] lsfBytes = LSFEncoder.EncodeToArray(mediumObject); 
 
-            // Serialize to JSON string
-            string jsonString = JsonConvert.SerializeObject(mediumList);
+            // Serialize the flat dictionary to JSON string
+            string jsonString = JsonConvert.SerializeObject(mediumObject);
             
-            _mediumDataCache = new BenchmarkDataset($"Medium ({complexityFactor})", lsfBytes, jsonString);
+            // Update cache with specific factors in name
+            _mediumDataCache = new BenchmarkDataset($"Medium ({complexityFactor},{listSizeFactor})", lsfBytes, jsonString);
             return _mediumDataCache;
         }
 
@@ -100,9 +110,9 @@ namespace Zerox.LSF.Benchmarks
         public static IEnumerable<BenchmarkDataset> GetDataSets()
         {
             yield return GetSmallDataset();
-            yield return GetMediumDataset(); // Uses default complexityFactor
+            yield return GetMediumDataset(); // Uses default factors
             // Can add more datasets here if needed, e.g.:
-            // yield return GetMediumDataset(5000);
+            // yield return GetMediumDataset(5000, 20);
         }
     }
 } 
