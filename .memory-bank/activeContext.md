@@ -1,141 +1,129 @@
 # LSF Active Context
 
+## Current Focus
+We are planning the implementation of a new LSF 3.0 parser based on the updated specification. This is a significant simplification from the LSF 2.0 design, with fewer tokens and a more streamlined approach.
+
+### Key Changes from LSF v2.0 to v3.0
+1. Reduced from four structural tokens in v2.0 to just three in v3.0: `$o~`, `$f~`, `$v~` (plus optional `$t~` for types)
+2. Removed explicit array tokens (`$a~`), replaced with multiple `$v~` tokens for the same field
+3. Simplified structure with only object, field, and value nodes
+4. Adopted a strict two-pass parsing strategy: token scanning followed by DOM building
+
+## Recent Decisions
+1. **Parser Architecture**: Designed a two-pass parser with separate token scanning and DOM building phases
+2. **Performance Focus**: Prioritized speed optimization through pre-allocation, TypedArrays, and zero-copy strategies
+3. **Visitor Pattern**: Committed to using the visitor pattern for JSON conversion and other output formats
+4. **Array Simplification**: Arrays now represented by multiple values rather than a separate token type
+
+## Current Tasks
+1. Planning the core token scanner implementation
+2. Designing the DOM builder for efficient traversal
+3. Planning the DOM navigator for zero-copy access
+4. Designing the visitor pattern for LSF-to-JSON conversion
+5. Setting up tests for the new LSF 3.0 parser
+
+## Technical Challenges
+1. **Memory Efficiency**: Ensuring the parser uses minimal memory while maintaining performance
+2. **Two-Pass Performance**: Optimizing both the token scanning and DOM building passes
+3. **Implicit Arrays**: Handling multiple values as arrays without explicit array tokens
+4. **Type Safety**: Maintaining type hint support in the new format
+
+## Next Steps
+1. Implement the token scanner for efficient token identification
+2. Create the DOM builder to process token stream
+3. Develop DOM navigator with zero-copy principles
+4. Build LSF-to-JSON visitor implementation
+5. Set up test suite with basic test cases
+6. Benchmark against previous parsers
+
+## Open Questions
+1. What are the optimal performance boundaries for token scanning?
+2. How can we optimize memory usage with TypedArrays?
+3. What's the most efficient way to handle string decoding?
+
 ## Current Work Focus
 
-The LSF project is currently in active development with the following focus areas:
+The LSF project is now focused on the implementation of LSF 3.0:
 
-1. **Enhance Documentation and Examples**:
-   - Add more comprehensive usage examples
-   - Create integration examples with LLM frameworks
-   - Complete API reference documentation with TypeDoc
+1. **LSF 3.0 Specification**:
+   - Created a significantly simplified specification with only three core tokens
+   - Designed for even better LLM compatibility
+   - Simplified array handling with a semantic approach (multiple values = array)
 
-2. **Package Publication**:
-   - Publish NPM and PyPI packages
-   - Update documentation with installation instructions
-   - Create release notes
+2. **Parser Implementation Plan**:
+   - Completed comprehensive implementation plan (ver2-parser-plan.md)
+   - Defined two-pass architecture with token scanner and DOM builder
+   - Outlined visitor pattern approach for JSON conversion
+   - Established aggressive performance targets (>10M tokens/second)
 
-3. **C# Implementation**:
-   - Start developing C# version based on existing patterns
-   - Ensure consistent API across all language implementations
-   - Implement full test suite for C# version
-
-4. **Performance Optimization**:
-   - Refine benchmarking methodology with accurate tokenizers
-   - Improve LSF decoder performance based on benchmark findings
-   - Create visualizations of benchmark results
+3. **Next Phase Implementation**:
+   - Preparing to implement token scanner
+   - Will follow with DOM builder, navigator, and visitor components
+   - Focus on performance optimization throughout
 
 ## Recent Changes
 
-1. **Memory Bank Documentation**:
-   - Created comprehensive Memory Bank structure
-   - Documented project requirements, context, and progress
+1. **LSF 3.0 Specification**:
+   - Created complete specification document
+   - Simplified token structure from v2.0
+   - Redesigned with "fewer tokens = fewer mistakes" philosophy
+   - Added examples and prompt templates for the new format
 
-2. **Python Implementation**:
-   - Completed full implementation of encoder, decoder, and simple API
-   - Added comprehensive test suite with 100% pass rate
-   - Fixed whitespace handling bug in decoder
-   - Ensured robust error handling
-   - Built and prepared PyPI package
-   - Created comprehensive benchmarking tools:
-     - Added performance benchmarks comparing LSF vs JSON
-     - Implemented token efficiency analysis identical to JavaScript
-     - Developed optimized decoder implementations for better performance
-     - Created shared test scenarios for consistent benchmarking
-     - Added detailed benchmark documentation
-
-3. **TypeScript Implementation**:
-   - Completed TypeScript port with feature parity to Python
-   - Implemented encoder, decoder, and simple API
-   - Migrated testing from Jest to Vitest
-   - Created comprehensive test suite with proper assertions
-   - Added type safety with proper type declarations
-   - Fixed linting errors and added type assertions
-   - Built and prepared NPM package
-   - Created detailed usage examples
-   - Added bundling support with tsup for single-file distribution
-
-4. **Benchmarking Implementation**:
-   - Created performance benchmarking tools comparing LSF vs JSON in both JavaScript and Python
-   - Implemented token efficiency analysis for LLM context in both languages
-   - Added CSV report generation for data analysis
-   - Documented benchmark findings in README
-   - Identified that LSF is 30-50% more token-efficient than pretty-printed JSON
-   - Found that LSF performance is 10-77x slower than JSON when decoding
-   - Implemented three optimized Python decoder variants:
-     - FastLSFDecoder: Pre-compiled regex patterns and lookup tables
-     - NonRegexDecoder: Direct string manipulation without regex
-     - StreamingDecoder: Single-pass token processing approach
-   - Improved decoder performance by 1.3-1.4x with optimizations
-
-5. **GitHub Structure**:
-   - Established complete repository structure
-   - Created core documentation and configuration files
-   - Set up CI workflows for testing
+2. **Implementation Plan Update**:
+   - Updated parser implementation plan from v2.0 to v3.0
+   - Redesigned architecture for the simplified token structure
+   - Enhanced focus on performance optimization
+   - Established clear development phases
 
 ## Next Steps
 
 ### Immediate Tasks
 
-1. **Documentation Enhancement**:
-   - Generate TypeDoc API documentation for TypeScript implementation
-   - Add examples demonstrating integration with OpenAI/Anthropic APIs
-   - Document common error handling patterns
+1. **Implementation Start**:
+   - Begin implementation of token scanner
+   - Create DOM builder based on the implementation plan
+   - Develop DOM navigator and JSON visitor
 
-2. **Package Publication**:
-   - Publish NPM package to npm registry
-   - Publish PyPI package to Python Package Index
-   - Create release tags in GitHub repository
+2. **Testing Infrastructure**:
+   - Set up test suite for LSF 3.0 parser
+   - Create test cases covering all specification features
+   - Implement performance benchmarks
 
-3. **Performance Improvements**:
-   - Integrate optimized decoder into core Python package
-   - Apply similar optimization patterns to TypeScript decoder
-   - Integrate with tiktoken or other accurate tokenizers
-   - Create visualization tools for benchmark results
+3. **Documentation**:
+   - Document the LSF 3.0 parser architecture
+   - Create usage examples for the new API
+   - Update integration guides
 
 ### Medium-Term Tasks
 
-1. **C# Implementation**:
-   - Develop core C# implementation with the same patterns
-   - Create NuGet package
-   - Add .NET-specific integration examples
+1. **Performance Optimization**:
+   - Optimize token scanning with SIMD where available
+   - Refine memory usage patterns
+   - Implement benchmarking suite
 
-2. **Integration Guides**:
-   - Create detailed integration guides for popular LLM frameworks
-   - Add examples for function calling patterns
-   - Provide templates for common LLM workflows
-
-3. **Version 1.3 Planning**:
-   - Define scope for LSF v1.3
-   - Prioritize performance optimizations
-   - Consider adding schema validation capabilities
+2. **Language Implementations**:
+   - Port the implementation to Python after TypeScript version
+   - Ensure consistent API across languages
 
 ## Active Decisions and Considerations
 
-1. **LSF Schema Support**:
-   - Evaluating methods for optional schema validation
-   - Considering trade-offs between complexity and features
+1. **Parsing Strategy**:
+   - Committed to a strict two-pass approach for maximum performance
+   - First pass identifies all tokens
+   - Second pass builds the DOM structure
 
-2. **Custom Type Extensions**:
-   - Planning support for user-defined type extensions
-   - Need to maintain backward compatibility
+2. **Memory Optimization**:
+   - Using TypedArrays for numeric data
+   - Pre-allocating arrays based on input size
+   - Implementing efficient growth strategies
 
-3. **Error Recovery Strategy**:
-   - Current approach has proven effective in testing
-   - Considering more advanced recovery techniques for 1.3
-
-4. **Distribution Strategy**:
-   - NPM, PyPI, and NuGet packages will be the primary distribution methods
-   - GitHub packages as a secondary distribution option
-
-5. **Performance Considerations**:
-   - Benchmarks show LSF is significantly more token-efficient for complex data
-   - Decoder performance is a concern, with LSF being 10-77x slower than JSON
-   - Implemented optimized decoders improve performance by 1.3-1.4x
-   - Need to evaluate whether to integrate optimized decoders into core package
-   - For small data, token efficiency gains may not outweigh performance costs
+3. **Visitor Pattern**:
+   - Using visitor pattern for output generation
+   - Separating DOM structure from JSON conversion
+   - Allowing for multiple output formats
 
 ## Current Blockers
 
-No critical blockers at present. The project has made significant progress with both core implementations now complete, tested, and built for distribution. Benchmarking tools have been implemented in both Python and JavaScript, providing valuable insights into LSF's strengths and weaknesses compared to JSON. The next phase will focus on package publication, documentation, and beginning the C# implementation.
+No critical blockers at present. The project has a clear implementation plan for LSF 3.0 and is ready to begin coding the key components: token scanner, DOM builder, navigator, and JSON visitor.
 
-This active context represents the current state of the LSF project, highlighting the completed work on both Python and TypeScript implementations, benchmarking capabilities, and the future focus on documentation, performance improvements, and expansion to C#. 
+This active context represents the current state of the LSF project, highlighting the shift to LSF 3.0 with its simplified token structure and the implementation plan that has been developed. 

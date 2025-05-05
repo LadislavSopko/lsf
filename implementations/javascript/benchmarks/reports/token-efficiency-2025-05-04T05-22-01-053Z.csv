@@ -1,7 +1,0 @@
-Scenario,Description,LSF Size (bytes),JSON Size (bytes),Pretty JSON Size (bytes),LSF Tokens (est),JSON Tokens (est),Pretty JSON Tokens (est),Bytes Ratio (LSF/JSON),Token Ratio (LSF/JSON),Pretty Bytes Ratio (LSF/JSON Pretty),Pretty Token Ratio (LSF/JSON Pretty)
-Simple User Profile,Basic user profile with personal information,154,122,160,39,31,40,1.2623,1.2581,0.9625,0.9750
-Function Call Parameters,Typical parameters for an LLM function call,77,135,192,20,34,48,0.5704,0.5882,0.4010,0.4167
-API Response,Response from an API call with nested data,86,348,695,22,87,174,0.2471,0.2529,0.1237,0.1264
-Complex Nested Structure,Deeply nested JSON structure with arrays and objects,92,548,1383,23,137,346,0.1679,0.1679,0.0665,0.0665
-LLM Completion Context,Typical context passed to an LLM for completion,211,575,775,53,144,194,0.3670,0.3681,0.2723,0.2732
-Repetitive Data,Data with repeated structures that might benefit from references,204,873,1469,51,219,368,0.2337,0.2329,0.1389,0.1386

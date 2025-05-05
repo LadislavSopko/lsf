@@ -1,4 +1,0 @@
-Dataset,Iterations,JSON Size (bytes),LSF Size (bytes),Size Ratio (LSF/JSON),JSON Tokens (est),LSF Tokens (est),Token Ratio (LSF/JSON),JSON Stringify (ms),LSF Encode (ms),Encode Ratio (LSF/JSON),JSON Parse (ms),LSF Decode (ms),Decode Ratio (LSF/JSON),JSON Total (ms),LSF Total (ms),Total Ratio (LSF/JSON)
-small,5000,53,79,1.4906,14,20,1.4286,0.0003,0.0014,4.9675,0.0004,0.0047,10.3862,0.0007,0.0061,8.2637
-medium,1000,176,170,0.9659,44,43,0.9773,0.0007,0.0023,3.5133,0.0010,0.0130,13.3161,0.0016,0.0153,9.3460
-large,100,28071,5121,0.1824,7018,1281,0.1825,0.0773,0.0381,0.4933,0.0930,0.2808,3.0210,0.1703,0.3189,1.8731

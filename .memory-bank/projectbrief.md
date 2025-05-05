@@ -1,17 +1,27 @@
-# LSF Project Brief
+# LSF: LLM-Safe Format
 
-## Project Definition
-LSF (LLM-Safe Format) is a structured, flat serialization format designed specifically for maximum reliability and minimal error when used with large language models (LLMs). The format avoids common pitfalls found in formats like JSON or XML (such as mismatched brackets, quotes, or indentation) and uses fixed-length, extremely rare separators to maintain structure and parseability.
+## Project Overview
+LSF (LLM-Safe Format) is a structured data format designed specifically for Large Language Models (LLMs). It provides a reliable way to structure data for consumption by LLMs, addressing common issues with traditional formats like JSON when used in LLM contexts.
 
 ## Core Requirements
 
-1. **Error Tolerance**: Format must be resilient to small hallucinations or typos that typically break JSON or XML
-2. **Simplicity**: Parsing logic should be straightforward with minimal complexity
-3. **Deterministic Structure**: Flat, non-nested format that's easy for LLMs to understand and generate
-4. **Cross-Language Support**: Implementation in multiple languages (Python, JavaScript/TypeScript, C# planned)
-5. **LLM-Optimized**: Specifically designed for AI model generation rather than human readability
-6. **Lightweight**: Minimal overhead in terms of characters or tokens
-7. **Interoperability**: Easy conversion to/from more common formats like JSON
+1. **Parser Efficiency**: Implement a high-performance parser that can process LSF data with minimal memory and CPU usage
+2. **Format Robustness**: Ensure the format can handle nested structures, typed values, and complex data relationships
+3. **Ease of Use**: Provide a simple API for encoding/decoding LSF data
+4. **UTF-8 Safety**: Avoid delimiter characters that cause encoding issues in different environments
+5. **LLM Compatibility**: Design with LLM prompt context in mind to minimize token usage and improve parsing reliability
+
+## Technical Goals
+
+1. Implement LSF 2.0 specification with forward-only parsing
+2. Provide TypeScript/JavaScript implementation first, with potential for other languages later
+3. Deliver zero-copy parsing where possible to maximize performance
+4. Support bi-directional conversion between LSF and JSON
+5. Maintain extensive test coverage to ensure format compliance
+6. Document the format specification for implementers in other languages
+
+## Project Definition
+LSF (LLM-Safe Format) is a structured, flat serialization format designed specifically for maximum reliability and minimal error when used with large language models (LLMs). The format avoids common pitfalls found in formats like JSON or XML (such as mismatched brackets, quotes, or indentation) and uses fixed-length, extremely rare separators to maintain structure and parseability.
 
 ## Target Audience
 - Developers building agent systems and LLM-based applications

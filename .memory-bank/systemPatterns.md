@@ -1,263 +1,124 @@
-# LSF System Patterns
+# LSF System Architecture
 
-## System Architecture
+## Core Architecture
 
-LSF follows a clean, simple architecture designed for ease of implementation across multiple languages:
+LSF 3.0 follows a streamlined architecture with these key components:
 
 ```mermaid
-graph TD
-    A[LSF Format] --> B[Encoder]
-    A --> C[Decoder]
-    B --> D[Fluent API]
-    B --> E[Simple API]
-    C --> E
-    E --> F[JSON Conversion]
-    A --> G[Benchmarking]
-    C --> H[Optimized Decoders]
+flowchart TD
+    Input[LSF String/Buffer] --> TokenScanner[Token Scanner]
+    TokenScanner --> TokenStream[Token Stream]
+    TokenStream --> DOMBuilder[DOM Builder]
+    DOMBuilder --> DOM[DOM Structure]
+    DOM --> Visitor[LSF-to-JSON Visitor]
+    Visitor --> Output[JSON Object]
+    
+    JSONInput[JSON Object] --> Encoder[LSF Encoder]
+    Encoder --> LSFOutput[LSF String]
 ```
 
-### Core Components
+### Parser Architecture (v3.0)
+For LSF 3.0, we're implementing a strict two-pass parser:
 
-1. **Specification**: The LSF format definition (grammar, tokens, and rules)
-2. **Encoder**: Converts structured data to LSF format
-3. **Decoder**: Parses LSF format into structured data
-4. **Simple API**: High-level convenience methods for quick encoding/decoding
-5. **Converters**: Utilities to convert between LSF and other formats (primarily JSON)
-6. **Benchmarking**: Tools to measure performance and token efficiency
-7. **Optimized Decoders**: Alternative decoder implementations for better performance
-
-## Key Technical Decisions
-
-### Token Design (`$x~` pattern)
-
-LSF uses a distinct pattern for all tokens:
-- Dollar sign prefix (`$`)
-- 1-2 character identifier (e.g., `o`, `f`, `t`, `r`, `l`, `e`, `x`, `v`)
-- Section sign suffix (`~`)
-
-This pattern was chosen specifically because:
-- Extremely unlikely to appear in normal text
-- Distinct pattern that's easy for LLMs to recognize and reproduce
-- Fixed 3-character length for all tokens
-- Works across all programming languages
-- Non-ambiguous in parsing
-
-### Flat Structure
-
-LSF intentionally uses a flat structure with no nesting capabilities:
-- All objects are top-level
-- Relationships are expressed through object names or field references
-- This design drastically simplifies parsing and generation
-
-### Error Recovery
-
-Error handling is built into the format itself:
-- Each record is independent
-- Error markers (`$e~`) can be used to annotate problems
-- Parsing continues even when errors are encountered
-- Provides both the successfully parsed data and error details
-
-### Type System
-
-LSF v1.2 introduces an optional type system:
-- Type hints (`$t~`) provide explicit type information
-- Supports common types: int, float, bool, null, bin, str
-- Binary data uses base64 encoding to avoid token collisions
-- Types are optional, defaulting to string representation
-
-## Design Patterns
-
-Each LSF implementation follows consistent design patterns:
-
-### Fluent API
-
-```
-encoder.startObject("user")
-       .addField("name", "John")
-       .addList("tags", ["admin", "user"])
-       .toString()
+```mermaid
+flowchart TD
+    START[Input Buffer] --> PASS1[Pass 1: Token Scanner]
+    PASS1 --> TOKENS[Token Stream]
+    TOKENS --> PASS2[Pass 2: DOM Builder]
+    PASS2 --> DOM[DOM Structure]
+    DOM --> VISITOR[Visitor Pattern]
+    
+    subgraph "Pass 1: Token Scanner"
+        TS1[Scan for $o~, $f~, $v~, $t~ tokens]
+        TS2[Record token positions and types]
+        TS3[Store in TypedArrays]
+        
+        TS1 --> TS2 --> TS3
+    end
+    
+    subgraph "Pass 2: DOM Builder"
+        DB1[Process tokens sequentially]
+        DB2[Track object and field context]
+        DB3[Build zero-copy DOM structure]
+        
+        DB1 --> DB2 --> DB3
+    end
+    
+    subgraph "Visitor Pattern"
+        VP1[Walk DOM structure]
+        VP2[Generate output format]
+        VP3[Apply type conversions]
+        
+        VP1 --> VP2 --> VP3
+    end
 ```
 
-### Simple Conversion API
+## Key Design Patterns
 
-```
-lsf_string = to_lsf({"user": {"name": "John", "tags": ["admin", "user"]}})
-data = from_lsf(lsf_string)
-```
+### 1. Two-Pass Processing Pattern
+The parser uses a strict two-pass approach:
+- First pass: identifies all tokens without interpretation
+- Second pass: builds DOM structure based on token stream
 
-### Transaction Support
+### 2. DOM Builder Pattern
+A Document Object Model (DOM) is constructed during the second pass, with nodes representing objects, fields, and values.
 
-```
-encoder.startObject("user")
-       .addField("id", 123)
-       .startObject("profile")
-       .addField("name", "John")
-       .endTransaction()
-```
+### 3. Visitor Pattern
+Used for traversing the DOM structure when converting to other formats, allowing clean separation between structure and output.
 
-### Factory Pattern for Optimized Decoders
+### 4. Zero-Copy/Span Pattern
+Instead of string copies, we store buffer spans (start/length) for maximum performance.
 
-```python
-# Get optimized decoder by type
-decoder = get_optimized_decoder('fast')  # Options: 'fast', 'nonregex', 'streaming'
+### 5. Pre-allocation Pattern
+Memory is pre-allocated based on input size estimates to minimize allocations during parsing.
 
-# Use like standard decoder
-data = decoder.decode(lsf_string)
-```
+### 6. TypedArray Optimization
+Using TypedArrays for numeric data to optimize memory usage and access patterns.
 
 ## Component Relationships
 
-For each language implementation, the relationship between components follows a consistent pattern:
+### Token Scanner to DOM Builder
+- Token scanner identifies all tokens and their positions
+- Token stream is passed to DOM builder
+- DOM builder processes tokens sequentially, tracking context
 
-```mermaid
-classDiagram
-    class LSFEncoder {
-        +startObject(name)
-        +addField(key, value)
-        +addTypedField(key, value, type)
-        +addList(key, values)
-        +addError(message)
-        +endTransaction()
-        +toString()
-    }
-    
-    class LSFDecoder {
-        +decode(lsfString)
-        +getErrors()
-    }
-    
-    class Simple {
-        +to_lsf(data)
-        +from_lsf(lsfString)
-    }
-    
-    Simple --> LSFEncoder
-    Simple --> LSFDecoder
-    
-    class OptimizedDecoder {
-        +decode(lsfString)
-        +getErrors()
-    }
-    
-    OptimizedDecoder --|> LSFDecoder
-    
-    class Benchmarks {
-        +measure_performance()
-        +analyze_token_efficiency()
-        +profile_memory_usage()
-    }
-    
-    Benchmarks --> LSFEncoder
-    Benchmarks --> LSFDecoder
-    Benchmarks --> OptimizedDecoder
+### DOM Builder to DOM
+The DOM builder creates a structure with these relationships:
+- Objects contain fields
+- Fields contain values or multiple values (implicit arrays)
+- Values can be primitives with optional type hints
+
+### DOM to Visitor
+The DOM structure is traversed by visitors that can:
+- Convert to JSON
+- Pretty-print for debugging
+- Transform to other formats
+
+## Technical Decisions
+
+### 1. Two-Pass Approach
+The LSF 3.0 parser uses two distinct passes:
+1. First pass identifies all tokens without interpretation
+2. Second pass builds the DOM structure with proper context
+
+### 2. Implicit Arrays
+Arrays in LSF 3.0 are implicit - multiple values for the same field form an array:
+```
+$f~scores$v~98.5$v~87.3$v~92.1
 ```
 
-## Benchmarking Architecture
+### 3. Memory Management
+- Pre-allocated TypedArrays with efficient growth strategies
+- Zero-copy approach for all string data
 
-The benchmarking system follows a consistent pattern across language implementations:
+## Architecture Evolution
 
-```mermaid
-graph TD
-    A[Test Scenarios] --> B[Performance Benchmark]
-    A --> C[Token Efficiency Analysis]
-    A --> D[Decoder Optimization Analysis]
-    
-    B --> E[Size Comparison]
-    B --> F[Speed Comparison]
-    B --> G[Memory Usage]
-    
-    C --> H[Token Count Analysis]
-    C --> I[Efficiency Ratios]
-    
-    D --> J[Profiling]
-    D --> K[Bottleneck Identification]
-    D --> L[Optimization Implementation]
-    
-    L --> M[Regex Optimization]
-    L --> N[Non-Regex Approach]
-    L --> O[Streaming Approach]
-```
+### v2.0 to v3.0 Changes
+1. Removed explicit array tokens (`$a~`)
+2. Added value token (`$v~`) for explicit value marking
+3. Simplified to three core structural tokens
+4. Adopted implicit arrays (multiple values = array)
+5. Switched to strict two-pass architecture
+6. Enhanced focus on performance optimization
 
-### Key Benchmarking Components
-
-1. **Shared Scenarios**: Common test data across implementations
-2. **Performance Measurement**:
-   - Encode/decode timing comparison with JSON
-   - Memory usage profiling
-   - Operation count analysis
-3. **Token Efficiency**:
-   - Token estimation (chars/4)
-   - Comparison with compact and pretty-printed JSON
-   - Scenario-specific analysis
-4. **Optimization Approaches**:
-   - Bottleneck identification through profiling
-   - Multiple optimization strategies
-   - Comparative performance analysis
-
-## Optimization Patterns
-
-The Python implementation includes several optimization patterns:
-
-### Pre-compilation Pattern
-
-```python
-def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
-    # Pre-compile regex patterns
-    self._token_pattern = re.compile(r'\$([otefxv])~(.*?)(?=\$[otefxv]~|\Z)')
-    self._record_separator = re.compile(r'\$r~')
-    self._list_separator = re.compile(r'\$l~')
-```
-
-### Lookup Table Pattern
-
-```python
-def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
-    # Create lookup tables for token types and handlers
-    self._token_handlers = {
-        'o': self._handle_object,
-        'f': self._handle_field,
-        't': self._handle_typed_field,
-        'e': self._handle_error,
-    }
-```
-
-### Fast Path Pattern
-
-```python
-def decode(self, lsf_string: str) -> Dict[str, Any]:
-    # Fast path for empty strings
-    if not lsf_string:
-        return {}
-        
-    # Fast path for simple patterns
-    if "$o~" not in lsf_string:
-        return {}
-```
-
-### Streaming Single-Pass Pattern
-
-```python
-def decode(self, lsf_string: str) -> Dict[str, Any]:
-    # Process the string character by character in a single pass
-    i = 0
-    length = len(lsf_string)
-    
-    while i < length:
-        # Look for token markers
-        if lsf_string[i] == '$' and i + 2 < length and lsf_string[i+2] == '~':
-            # Process token directly without regex
-```
-
-## Standardization
-
-To ensure consistency across implementations:
-- Token patterns and grammar are strictly defined
-- Error handling follows the same recovery patterns
-- API naming conventions are kept consistent
-- Type handling is standardized
-- All implementations pass the same test suite
-- Benchmarking methodologies are consistent
-
-These architectural decisions make LSF both simple to implement and robust in practice, focusing on the specific needs of LLM-generated structured data. The addition of benchmarking tools and optimized decoders helps identify performance characteristics and improve real-world usage. 
+These architecture decisions support the goals of maximum performance, reliability, and ease of implementation across languages while simplifying the format for LLMs. 
