@@ -94,10 +94,14 @@ This document outlines the implementation plan for the LSF 3.0 parser in C#, lev
   - [x] Public methods for parsing LSF to JSON (string)
   - [x] Public methods for encoding objects to LSF
 - [ ] Implement benchmarking suite
-  - [ ] Generate diverse datasets: small (~KB), medium (~MB)
-  - [ ] Comparison of parsing/encoding speed against System.Text.Json/Newtonsoft.Json
+  - [x] Initial setup with BenchmarkDotNet (verified)
+  - [x] Basic benchmark: `LSFParser.ParseToJsonString` vs `System.Text.Json.Deserialize` (small data) (verified in `ParseBenchmark.cs`)
+  - [ ] Add benchmark for `LSFParser.ParseToDom`
+  - [ ] Add benchmark comparison against `Newtonsoft.Json` (package already referenced)
+  - [ ] Generate diverse datasets: small (~KB), medium (~MB) (Currently only hardcoded small data)
+  - [ ] Integrate generated datasets into benchmarks (e.g., using `[ParamsSource]`)
   - [ ] Performance profiling (CPU, memory allocation)
-  - [ ] **New**: Analyze LSF vs. JSON token efficiency (e.g., using a standard tokenizer like tiktoken) for representative data structures, considering LLM input cost.
+  - [ ] Analyze LSF vs. JSON token efficiency (e.g., using a standard tokenizer like tiktoken)
 - [ ] Run benchmarks and analyze results
 
 ### Phase 7: Optimization
