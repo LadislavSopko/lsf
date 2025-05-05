@@ -32,6 +32,10 @@
   - **Phase 3: DOM Builder**
     - Implemented DOMBuilder.Build
     - Created DOMBuilderTests
+  - **Phase 4: DOM Navigator & Visitor**
+    - Implemented DOMNavigator and tests
+    - Implemented IVisitor interface
+    - Implemented LSFToJSONVisitor and tests
 
 ## What's Working
 - **TypeScript Implementation**:
@@ -50,17 +54,18 @@
   - Core data structures defined
   - TokenScanner logic and tests
   - DOMBuilder logic and tests
+  - DOMNavigator logic and tests
+  - LSFToJSONVisitor logic and tests
 
 ## In Progress
-- **C# Implementation Phase 4: DOM Navigator & Visitor**
-  - Defining DOMNavigator class
-  - Defining IVisitor interface
+- **C# Implementation Phase 5: LSF Encoder**
+  - Defining LSFEncoder class
+  - Implementing EncodeToString/EncodeToArray
 
 ## Next To Build
 1. **C# Implementation**:
-   - **Phase 4**: Complete DOMNavigator, IVisitor, LSFToJSONVisitor, and tests
-   - **Phase 5**: LSF Encoder implementation and tests
-   - **Phase 6**: Benchmarking vs System.Text.Json
+   - **Phase 5**: Complete LSFEncoder and tests
+   - **Phase 6**: Integration (LSFParser facade) & Benchmarking
    - **Phase 7**: Optimization
    - **Phase 8**: Documentation & packaging
 
@@ -78,5 +83,6 @@
   - **Phase 1 (Core Data Structures)**: Complete
   - **Phase 2 (Token Scanner)**: Complete
   - **Phase 3 (DOM Builder)**: Complete
-  - **Phase 4 (Navigator & Visitor)**: In Progress
-  - **Phases 5-8**: Not Started 
+  - **Phase 4 (Navigator & Visitor)**: Complete
+  - **Phase 5 (Encoder)**: In Progress
+  - **Phases 6-8**: Not Started 
