@@ -36,6 +36,9 @@
     - Implemented DOMNavigator and tests
     - Implemented IVisitor interface
     - Implemented LSFToJSONVisitor and tests
+  - **Phase 5: LSF Encoder**
+    - Implemented LSFEncoder (EncodeToString/EncodeToArray for Dictionary input)
+    - Created LSFEncoderTests
 
 ## What's Working
 - **TypeScript Implementation**:
@@ -56,18 +59,18 @@
   - DOMBuilder logic and tests
   - DOMNavigator logic and tests
   - LSFToJSONVisitor logic and tests
+  - LSFEncoder logic and tests
 
 ## In Progress
-- **C# Implementation Phase 5: LSF Encoder**
-  - Defining LSFEncoder class
-  - Implementing EncodeToString/EncodeToArray
+- **C# Implementation Phase 6: Integration & Benchmarking**
+  - Creating LSFParser facade class
+  - Setting up benchmark suite
 
 ## Next To Build
 1. **C# Implementation**:
-   - **Phase 5**: Complete LSFEncoder and tests
-   - **Phase 6**: Integration (LSFParser facade) & Benchmarking
-   - **Phase 7**: Optimization
-   - **Phase 8**: Documentation & packaging
+   - **Phase 6**: Complete LSFParser facade and benchmarking setup/run.
+   - **Phase 7**: Optimization based on benchmark results.
+   - **Phase 8**: Documentation & Packaging.
 
 ## Known Issues
 - TypeScript `DOMBuilder` performance degrades relative to `JSON.parse` on larger datasets.
@@ -84,5 +87,6 @@
   - **Phase 2 (Token Scanner)**: Complete
   - **Phase 3 (DOM Builder)**: Complete
   - **Phase 4 (Navigator & Visitor)**: Complete
-  - **Phase 5 (Encoder)**: In Progress
-  - **Phases 6-8**: Not Started 
+  - **Phase 5 (Encoder)**: Complete
+  - **Phase 6 (Integration & Benchmarking)**: In Progress
+  - **Phases 7-8**: Not Started 

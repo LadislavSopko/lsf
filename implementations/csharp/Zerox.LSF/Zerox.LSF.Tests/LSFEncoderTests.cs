@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 using Zerox.LSF;
+using System.Text;
 
 namespace Zerox.LSF.Tests
 {
@@ -171,6 +172,20 @@ namespace Zerox.LSF.Tests
             string expected = "$o~$f~emptyString$v~";
             string actual = LSFEncoder.EncodeToString(data);
             Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void EncodeToArray_SimpleObject_CorrectBytes()
+        {
+             var data = new Dictionary<string, object?>
+            {
+                { "Name", "Test" },
+                { "Value", 123 }
+            };
+            string expectedString = "$o~$f~Name$v~Test$f~Value$v~123$t~n";
+            byte[] expectedBytes = new UTF8Encoding(false).GetBytes(expectedString);
+            byte[] actualBytes = LSFEncoder.EncodeToArray(data);
+            Assert.Equal(expectedBytes, actualBytes);
         }
     }
 } 

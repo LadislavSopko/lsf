@@ -2,7 +2,7 @@
 
 ## Current Focus
 Implementation of the LSF 3.0 parser in C# based on the updated specification and implementation plan (ver2-parser-c#-plan.md).
-Currently working on **Phase 5: LSF Encoder Implementation**.
+Currently working on **Phase 6: Integration & Benchmarking**.
 
 ### Key Changes from LSF v2.0 to v3.0
 - Reduced to three core tokens: `$o~`, `$f~`, `$v~` (plus optional `$t~`).
@@ -33,39 +33,39 @@ Currently working on **Phase 5: LSF Encoder Implementation**.
     *   **Phase 2 (Token Scanner)**: Implemented `TokenScanner.Scan` and unit tests.
     *   **Phase 3 (DOM Builder)**: Implemented `DOMBuilder.Build` (including implicit nodes, type hints, children population) and unit tests.
     *   **Phase 4 (Navigator & Visitor)**: Completed (`DOMNavigator`, `IVisitor`, `LSFToJSONVisitor` and tests).
+    *   **Phase 5 (Encoder)**: Completed (`LSFEncoder` and tests for Dictionary input).
 
 ## Current Tasks
-- Starting Phase 5: LSF Encoder Implementation.
-- Define and implement `LSFEncoder` class.
-- Implement `EncodeToString` and `EncodeToArray` methods.
-- Ensure flat structure enforcement during encoding.
-- Handle type hint generation.
+- Starting Phase 6: Integration & Benchmarking.
+- Create main API facade class (`LSFParser`).
+- Define public methods for parsing to DOM/JSON and encoding from objects.
+- Implement benchmarking suite setup.
+- Generate small, medium, large datasets (or adapt from TS version).
 
 ## Technical Challenges
-- **Optimization**: Improving parser performance (future task).
-- **Cross-Language Consistency**: Ensuring C# implementation matches TS behaviour.
-- **Encoder Efficiency**: Building the LSF output efficiently (e.g., using StringBuilder or direct byte manipulation).
-- **Flat Structure Enforcement**: Detecting and reporting attempts to encode nested structures.
+- **API Design**: Creating a clean, intuitive, and efficient public API.
+- **Benchmarking**: Setting up fair and accurate benchmarks against System.Text.Json / Newtonsoft.Json.
+- **Performance Analysis**: Interpreting benchmark results to guide optimization.
 
 ## Next Steps
-1.  **Implement C# Phase 5**: 
-    - Create `LSFEncoder` class and tests.
-2.  **Implement C# Phase 6**: Create main API facade (`LSFParser`) and benchmarking suite.
-3.  **Benchmark C# implementation**.
-4.  **Optimize C# implementation** (Phase 7).
+1.  **Implement C# Phase 6**: 
+    - Create `LSFParser` facade class.
+    - Set up benchmark project/harness.
+    - Run initial benchmarks.
+2.  **Implement C# Phase 7**: Analyze benchmark results and optimize code.
+3.  **Implement C# Phase 8**: Add documentation and package.
 
 ## Open Questions
-- How will the performance of the C# implementation compare to the TypeScript version?
-- Which C#-specific optimizations will provide the most benefit?
-- What's the best internal strategy for the encoder (StringBuilder vs byte arrays)?
+- How will the performance of the C# implementation compare to the TypeScript version and standard JSON libraries?
+- What specific areas will likely need optimization based on benchmarks?
+- Should the public API handle streams in addition to strings/byte arrays?
 
 ## Current Work Focus
-Starting Phase 5: LSF Encoder implementation for the C# LSF parser.
+Starting Phase 6: Integration (API facade) and Benchmarking setup for the C# LSF parser.
 
 ## Recent Changes
-- Implemented `LSFToJSONVisitor` and tests (Phase 4).
-- Implemented `IVisitor` interface (Phase 4).
-- Implemented `DOMNavigator` and tests (Phase 4).
+- Implemented `LSFEncoder` and tests (Phase 5).
+- Completed Visitor pattern implementation (Phase 4).
 - Completed `DOMBuilder` (Phase 3).
 - Created unit tests for `DOMBuilder` (Phase 3).
 - Created `ValueHint` enum.
@@ -78,11 +78,11 @@ Starting Phase 5: LSF Encoder implementation for the C# LSF parser.
 ## Next Steps
 
 ### Immediate Tasks
-- **Implement `LSFEncoder` class structure**.
-- **Implement `EncodeToString` method**.
+- **Create `LSFParser.cs`** file and define class structure.
+- **Define public static methods** for Parse/Encode operations.
 
 ### Medium-Term Tasks
-1.  **Complete C# Implementation**: Follow the phases in ver2-parser-c#-plan.md (Currently starting Phase 5).
+1.  **Complete C# Implementation**: Follow the phases in ver2-parser-c#-plan.md (Currently starting Phase 6).
 2.  **Performance Optimization & Benchmarking**: Compare C# implementation to System.Text.Json.
 3.  **Documentation**: Add XML documentation to C# code and update README.
 
@@ -94,7 +94,8 @@ Starting Phase 5: LSF Encoder implementation for the C# LSF parser.
 5.  **Parsing Strategy**: Implemented two-pass (Scan -> Build).
 6.  **DOM Structure**: Using `List<LSFNode>`.
 7.  **DOM Access**: Using `DOMNavigator` struct.
-8.  **Output Generation**: Using `LSFToJSONVisitor` (Visitor pattern).
+8.  **Output Generation**: Using `LSFToJSONVisitor`.
+9.  **Encoding**: Using `LSFEncoder` for Dictionary input.
 
 ## Current Blockers
-- None. Ready to start Phase 5. 
+- None. Ready to start Phase 6. 

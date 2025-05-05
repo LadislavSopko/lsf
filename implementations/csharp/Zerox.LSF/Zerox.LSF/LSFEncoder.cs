@@ -44,12 +44,20 @@ namespace Zerox.LSF
             return sb.ToString();
         }
 
-        // TODO: Implement EncodeToArray(Dictionary<string, object?> data, string objectName = "")
-        // public static byte[] EncodeToArray(Dictionary<string, object?> data, string objectName = "")
-        // {
-        //    string lsfString = EncodeToString(data, objectName);
-        //    return Encoding.UTF8.GetBytes(lsfString); // Simple implementation
-        // }
+        /// <summary>
+        /// Encodes a dictionary representing a single LSF object into a UTF-8 byte array.
+        /// </summary>
+        /// <param name="data">The dictionary representing the object.</param>
+        /// <param name="objectName">Optional name for the root object.</param>
+        /// <returns>The LSF formatted data as a byte array.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if data is null.</exception>
+        /// <exception cref="ArgumentException">Thrown if nested objects or unsupported types are encountered.</exception>
+        public static byte[] EncodeToArray(Dictionary<string, object?> data, string objectName = "")
+        {
+           string lsfString = EncodeToString(data, objectName);
+           // Use UTF8Encoding without BOM for consistency
+           return new UTF8Encoding(false).GetBytes(lsfString); 
+        }
 
         private static void AppendField(StringBuilder sb, string fieldName, object? value)
         {
