@@ -4,12 +4,34 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    
+    <!-- NuGet Package Properties -->
+    <PackageId>Zerox.LSF</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Ladislav Sopko</Authors>
+    <Company>0ics srl</Company>
+    <Description>C# implementation of the LSF v3.0 (LLM-Safe Format) parser and encoder. Designed for high performance and reliability with LLM output.</Description>
+    <Copyright>Copyright (c) Ladislav Sopko 2024</Copyright>
+    <PackageProjectUrl>https://github.com/LadislavSopko/lsf</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/LadislavSopko/lsf.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>lsf;llm;serialization;parser;encoder;structured-data;format</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
   </PropertyGroup>
 
   <ItemGroup>
     <!-- <Compile Include="DOMNavigator.cs" />  Remove explicit include -->
     <PackageReference Include="System.Memory" Version="4.6.3" />
     <PackageReference Include="System.Text.Json" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>
