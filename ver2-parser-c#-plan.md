@@ -13,13 +13,10 @@ This document outlines the implementation plan for the LSF 3.0 parser in C#, lev
 
 ## C# Project Structure
 
-- [ ] Create a new C# project (class library)
-- [ ] Set up basic project structure
-  - [ ] `src/LSF/` folder for LSF parser implementation
-  - [ ] `tests/LSF.Tests/` folder for unit tests
-  - [ ] Use .NET 6.0+ target framework
-- [ ] Set up test framework (xUnit or NUnit)
-- [ ] Create README.md with basic usage instructions
+- [x] Create a new C# solution with projects
+  - [x] `Zerox.LSF` library project (targeting .NET Standard 2.0)
+  - [x] `Zerox.LSF.Tests` test project (targeting .NET 9.0)
+  - [x] Set up xUnit testing framework
 
 ## Implementation Phases
 
@@ -33,7 +30,7 @@ This document outlines the implementation plan for the LSF 3.0 parser in C#, lev
 ### Phase 2: Token Scanner Implementation
 
 - [ ] Implement `TokenScanner` class
-  - [ ] Method to scan input buffer (byte[] or ReadOnlySpan<byte>) for tokens
+  - [ ] Method to scan input buffer (ReadOnlySpan<byte>) for tokens
   - [ ] Storage for token positions using native arrays
   - [ ] Efficient resizing strategy for token arrays
   - [ ] Handle UTF-8 encoding correctly
@@ -106,10 +103,10 @@ This document outlines the implementation plan for the LSF 3.0 parser in C#, lev
 
 - [ ] Profile code to identify bottlenecks
 - [ ] Optimize `DOMBuilder` (known bottleneck in TypeScript version)
-- [ ] Investigate C#-specific optimizations:
+- [ ] C#-specific optimizations:
   - [ ] Span<T> and Memory<T> usage
-  - [ ] Avoid allocations in hot paths
-  - [ ] StringBuilder pooling
+  - [ ] Minimize allocations in hot paths
+  - [ ] ArrayPool<T> for array reuse
   - [ ] Consider unsafe code for critical sections
 - [ ] Re-run benchmarks to measure improvement
 
@@ -124,18 +121,22 @@ This document outlines the implementation plan for the LSF 3.0 parser in C#, lev
 
 ### C# Specific Approaches
 
-1. **Memory Management**:
+1. **Target Frameworks**:
+   - Library: .NET Standard 2.0 for maximum compatibility
+   - Tests: .NET 9.0 for latest features and performance
+
+2. **Memory Management**:
    - Use `Span<T>` and `Memory<T>` for zero-allocation slicing
    - Consider `ArrayPool<T>` for array reuse
    - Use `StringPool` for frequently accessed strings
 
-2. **Performance Optimizations**:
+3. **Performance Optimizations**:
    - Minimize allocations in parsing hot paths
    - Use struct options where appropriate for small value objects
    - Consider unsafe code blocks for performance-critical sections
    - Use `StringBuilder` with appropriate initial capacity
 
-3. **API Design**:
+4. **API Design**:
    - Follow C# conventions (.NET Design Guidelines)
    - Proper exception handling with custom LSF exceptions
    - Support both synchronous and asynchronous parsing
@@ -162,7 +163,7 @@ This document outlines the implementation plan for the LSF 3.0 parser in C#, lev
 
 ## Testing Strategy
 
-- Use xUnit or NUnit for unit testing
+- Use xUnit for unit testing (already configured)
 - Create test helpers for generating test data
 - Test both normal and edge cases
 - Include performance tests
