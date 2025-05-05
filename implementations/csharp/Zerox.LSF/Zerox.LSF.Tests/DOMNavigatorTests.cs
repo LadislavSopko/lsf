@@ -157,13 +157,27 @@ namespace Zerox.LSF.Tests
              // the builder creates implicit objects allowing this structure technically.
              // The navigator should correctly identify them.
             string lsf = "$f~Field1$v~Value1$f~Field2$v~Value2";
-            var navigator = CreateNavigator(lsf, out _, out _); 
-            // Expected Nodes: [ImpObj0, Field1, Value1, ImpObj1, Field2, Value2]
-            Assert.Equal(6, navigator.NodeCount);
-            var roots = navigator.GetRootIndices().ToList(); // Fixed ToList() 
-            Assert.Equal(2, roots.Count);
-            Assert.Contains(0, roots); // Implicit object for Field1
-            Assert.Contains(3, roots); // Implicit object for Field2
+            var navigator = CreateNavigator(lsf, out _, out var nodes); 
+            // Expected Nodes: [ImpObj0, Field1, Value1, Field2, Value2]
+            // ImpObj0 is the only root, with Field1 and Field2 as children.
+            Assert.Equal(5, navigator.NodeCount); // Corrected expected count
+            var roots = navigator.GetRootIndices().ToList(); 
+            Assert.Single(roots); // Only one implicit root should be created
+            Assert.Contains(0, roots); // Implicit object for Field1 is the single root
+            
+            // Verify structure
+            Assert.Equal(TokenType.Object, nodes[0].Type);
+            Assert.Equal(-1, nodes[0].ParentIndex);
+            Assert.NotNull(nodes[0].ChildrenIndices);
+            Assert.Equal(2, nodes[0].ChildrenIndices!.Count); // Field1 and Field2 are children
+            Assert.Contains(1, nodes[0].ChildrenIndices!); // Field1 index - Add null-forgiving
+            Assert.Contains(3, nodes[0].ChildrenIndices!); // Field2 index - Add null-forgiving
+
+            Assert.Equal(TokenType.Field, nodes[1].Type);
+            Assert.Equal(0, nodes[1].ParentIndex); // Child of ImpObj0
+
+            Assert.Equal(TokenType.Field, nodes[3].Type);
+            Assert.Equal(0, nodes[3].ParentIndex); // Child of ImpObj0
         }
 
         [Fact]
