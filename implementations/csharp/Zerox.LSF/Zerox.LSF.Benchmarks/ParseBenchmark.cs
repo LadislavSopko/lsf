@@ -1,12 +1,9 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
-using Zerox.LSF; // Reference the main library
 using Newtonsoft.Json; // Add Newtonsoft.Json
-using Newtonsoft.Json.Linq; // For JObject
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer; // For JObject
 
 namespace Zerox.LSF.Benchmarks
 {
@@ -16,7 +13,7 @@ namespace Zerox.LSF.Benchmarks
     public class ParseBenchmark
     {
         // Add ParamsSource property
-        [ParamsSource(nameof(BenchmarkDataGenerator.GetDataSets), Namespace = "Zerox.LSF.Benchmarks")]
+        [ParamsSource(nameof(BenchmarkDataGenerator.GetDataSets))]
         public BenchmarkDataset Dataset { get; set; }
 
         // --- Benchmarks --- 
