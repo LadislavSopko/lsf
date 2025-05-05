@@ -2,7 +2,7 @@
 
 ## TL;DR Optimizations
 
-1. **Removed `$f§` field prefix** - Save 15% tokens
+1. **Removed `$f~` field prefix** - Save 15% tokens
 2. **Simplified type handling** - Type as value suffix with separator
 3. **Added shorthand types** - 1-letter type codes
 4. **Implicit string type** - Default = string (no type marker)
@@ -15,13 +15,13 @@
 
 ### Before (v1.2)
 ```ebnf
-field ::= "$f§" key "$f§" value "$r§"
-typed_field ::= "$t§" type "$f§" key "$f§" value "$r§"
+field ::= "$f~" key "$f~" value "$r~"
+typed_field ::= "$t~" type "$f~" key "$f~" value "$r~"
 ```
 
 ### After (v1.3)
 ```ebnf
-field ::= key "$f§" value ["$t§" type] "$r§"
+field ::= key "$f~" value ["$t~" type] "$r~"
 ```
 
 ## Token Changes
@@ -35,39 +35,39 @@ field ::= key "$f§" value ["$t§" type] "$r§"
 ## Separator Optimization
 
 ### Removed Separators
-- ❌ `$f§` at field start (redundant)
-- ❌ `$t§` prefix (moved to suffix)
-- ⚡ `$v§` (version now optional)
-- ⚡ `$e§` (errors now in regular fields)
-- ⚡ `$x§` (transaction optional)
+- ❌ `$f~` at field start (redundant)
+- ❌ `$t~` prefix (moved to suffix)
+- ⚡ `$v~` (version now optional)
+- ⚡ `$e~` (errors now in regular fields)
+- ⚡ `$x~` (transaction optional)
 
 ### Core Separators (4 only)
 | Symbol | Purpose | Example |
 |--------|---------|---------|
-| `$o§` | Object start | `$o§user$r§` |
-| `$f§` | Key-value separator | `name$f§John$r§` |
-| `$r§` | Record end | `*$r§` |
-| `$l§` | List separator | `tags$f§a$l§b$l§c$r§` |
+| `$o~` | Object start | `$o~user$r~` |
+| `$f~` | Key-value separator | `name$f~John$r~` |
+| `$r~` | Record end | `*$r~` |
+| `$l~` | List separator | `tags$f~a$l~b$l~c$r~` |
 
 ## Type System Optimization
 
 ### Type Codes (1-letter)
 | Type | Code | Example |
 |------|------|---------|
-| Integer | `n` | `age$f§25$t§n$r§` |
-| Float | `f` | `price$f§19.99$t§f$r§` |
-| Boolean | `b` | `active$f§true$t§b$r§` |
-| DateTime | `d` | `created$f§2025-01-15T10:30:00Z$t§d$r§` |
-| (String) | (none) | `name$f§John$r§` |
+| Integer | `n` | `age$f~25$t~n$r~` |
+| Float | `f` | `price$f~19.99$t~f$r~` |
+| Boolean | `b` | `active$f~true$t~b$r~` |
+| DateTime | `d` | `created$f~2025-01-15T10:30:00Z$t~d$r~` |
+| (String) | (none) | `name$f~John$r~` |
 
 ### Parsing Logic
 ```python
 # Simple type detection
-parts = field.split('$f§')
-if len(parts) == 2:  # key$f§value$r§
+parts = field.split('$f~')
+if len(parts) == 2:  # key$f~value$r~
     key, value = parts
-    if '$t§' in value:
-        value, type_hint = value.split('$t§')
+    if '$t~' in value:
+        value, type_hint = value.split('$t~')
         # Parse typed value
     else:
         # String (default)
@@ -79,30 +79,30 @@ else:
 
 ### Basic Data (v1.3)
 ```
-$o§user$r§
-id$f§123$t§n$r§
-name$f§John Doe$r§
-balance$f§99.99$t§f$r§
-active$f§true$t§b$r§
+$o~user$r~
+id$f~123$t~n$r~
+name$f~John Doe$r~
+balance$f~99.99$t~f$r~
+active$f~true$t~b$r~
 ```
 
 ### Complex Data
 ```
-$o§product$r§
-name$f§Laptop Pro$r§
-price$f§999.99$t§f$r§
-specs$f§8GB RAM$l§256GB SSD$l§Intel i7$r§
-tags$f§electronics$l§computers$l§sale$r§
+$o~product$r~
+name$f~Laptop Pro$r~
+price$f~999.99$t~f$r~
+specs$f~8GB RAM$l~256GB SSD$l~Intel i7$r~
+tags$f~electronics$l~computers$l~sale$r~
 ```
 
 ### Multiple Objects (Streaming)
 ```
-$o§order$r§
-id$f§ORD001$r§
-total$f§1299.98$t§f$r§
-$o§customer$r§
-name$f§Alice Smith$r§
-vip$f§true$t§b$r§
+$o~order$r~
+id$f~ORD001$r~
+total$f~1299.98$t~f$r~
+$o~customer$r~
+name$f~Alice Smith$r~
+vip$f~true$t~b$r~
 ```
 
 ## Performance Gains
@@ -121,15 +121,15 @@ vip$f§true$t§b$r§
 # v1.2 → v1.3 converter
 def upgrade_lsf(v12_string):
     # Remove field prefixes
-    text = v12_string.replace('$f§', '')
+    text = v12_string.replace('$f~', '')
     
     # Convert type prefixes to suffixes
-    text = re.sub(r'\$t§(\w+)\$f§(\w+)\$f§(.*?)\$r§', 
-                  r'\2$f§\3$t§\1$r§', text)
+    text = re.sub(r'\$t~(\w+)\$f~(\w+)\$f~(.*?)\$r~', 
+                  r'\2$f~\3$t~\1$r~', text)
     
     # Remove version/error/transaction tokens
-    text = text.replace('$v§1.2$r§', '')
-    text = text.replace('$x§$r§', '')
+    text = text.replace('$v~1.2$r~', '')
+    text = text.replace('$x~$r~', '')
     
     return text
 ```
@@ -149,7 +149,7 @@ def upgrade_lsf(v12_string):
 
 ## Edge Cases Handled
 
-1. **Empty Values**: `key$f§$r§`
+1. **Empty Values**: `key$f~$r~`
 2. **Reserved Characters**: Escape only in binary values
 3. **Nested Objects**: Use sequential object declarations
 4. **Large Numbers**: Support scientific notation in strings
@@ -158,18 +158,18 @@ def upgrade_lsf(v12_string):
 
 ```
 Generate data in LSF format. Rules:
-1. Object: $o§name$r§
-2. Field: key$f§value$r§
-3. Typed: key$f§value$t§type$r§
-4. List: key$f§item1$l§item2$r§
+1. Object: $o~name$r~
+2. Field: key$f~value$r~
+3. Typed: key$f~value$t~type$r~
+4. List: key$f~item1$l~item2$r~
 
 Types: n(number), f(float), b(bool), d(date)
 Default type is string (no marker).
 
 Example:
-$o§user$r§
-name$f§John$r§
-age$f§30$t§n$r§
+$o~user$r~
+name$f~John$r~
+age$f~30$t~n$r~
 ```
 
 ## Summary

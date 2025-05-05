@@ -83,7 +83,7 @@ console.log(JSON.stringify(manualDecodedData, null, 2));
 console.log('\n\n=== Example 3: Error Handling ===');
 
 // Create an invalid LSF string with a syntax error
-const invalidLsf = '$o§user$r§$f§name$f§John Doe$r§$f§invalid_syntax';
+const invalidLsf = '$o~user$r~$f~name$f~John Doe$r~$f~invalid_syntax';
 
 // Try to decode it
 try {
@@ -106,11 +106,11 @@ async function simulateLLMCall(): Promise<string> {
   // This simulates an LLM returning LSF-formatted data
   const fakeLLMResponse = `I'll provide the user data in LSF format:
 
-$o§user$r§$f§id$f§789$r§$f§name$f§Alex Smith$r§$f§email$f§alex@example.com$r§
+$o~user$r~$f~id$f~789$r~$f~name$f~Alex Smith$r~$f~email$f~alex@example.com$r~
 
 The user has the following preferences:
 
-$o§preferences$r§$f§theme$f§light$r§$f§language$f§en-GB$r§
+$o~preferences$r~$f~theme$f~light$r~$f~language$f~en-GB$r~
 
 Let me know if you need any other information.`;
 
@@ -124,7 +124,7 @@ async function extractLSFFromLLMResponse() {
   console.log(llmResponse);
   
   // Extract LSF from the text (in real usage, you might need a more robust extraction)
-  const lsfRegex = /\$o§.*?(?:\$r§.*?)*$/gms;
+  const lsfRegex = /\$o~.*?(?:\$r~.*?)*$/gms;
   const lsfMatches = llmResponse.match(lsfRegex);
   
   if (lsfMatches && lsfMatches.length > 0) {

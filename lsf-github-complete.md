@@ -280,7 +280,7 @@ A clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
-1. Input LSF string: `$o§...`
+1. Input LSF string: `$o~...`
 2. Use function: `lsf_to_json()`
 3. Error or unexpected output: '...'
 
@@ -607,8 +607,8 @@ SOFTWARE.
 
 ### Major Features
 - **Type System**: Added support for `int`, `float`, `bool`, `null`, and `bin` types
-- **Error Recovery**: Introduced `$e§` marker for graceful error handling
-- **Transactions**: Added `$x§` for transaction boundaries
+- **Error Recovery**: Introduced `$e~` marker for graceful error handling
+- **Transactions**: Added `$x~` for transaction boundaries
 - **Binary Support**: Base64 encoding for binary data
 
 ### Performance Improvements

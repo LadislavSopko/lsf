@@ -23,9 +23,9 @@ class LSFSimpleTests(TestCase):
         result = to_lsf(data)
         
         # Check for object marker and fields
-        self.assertIn("$o§user$r§", result)
-        self.assertIn("$f§name$f§John$r§", result)
-        self.assertIn("$t§int$f§age$f§30$r§", result)
+        self.assertIn("$o~user$r~", result)
+        self.assertIn("$f~name$f~John$r~", result)
+        self.assertIn("$t~int$f~age$f~30$r~", result)
         
     def test_to_lsf_multiple_objects(self):
         """Test converting multiple objects to LSF."""
@@ -41,11 +41,11 @@ class LSFSimpleTests(TestCase):
         result = to_lsf(data)
         
         # Check for both objects
-        self.assertIn("$o§user$r§", result)
-        self.assertIn("$o§product$r§", result)
-        self.assertIn("$f§name$f§John$r§", result)
-        self.assertIn("$f§name$f§Laptop$r§", result)
-        self.assertIn("$t§float$f§price$f§999.99$r§", result)
+        self.assertIn("$o~user$r~", result)
+        self.assertIn("$o~product$r~", result)
+        self.assertIn("$f~name$f~John$r~", result)
+        self.assertIn("$f~name$f~Laptop$r~", result)
+        self.assertIn("$t~float$f~price$f~999.99$r~", result)
         
     def test_to_lsf_with_list(self):
         """Test converting a dict with a list to LSF."""
@@ -58,7 +58,7 @@ class LSFSimpleTests(TestCase):
         result = to_lsf(data)
         
         # Check for list representation
-        self.assertIn("$f§tags$f§admin$l§user$r§", result)
+        self.assertIn("$f~tags$f~admin$l~user$r~", result)
         
     def test_to_lsf_with_nested_types(self):
         """Test converting a dict with various types to LSF."""
@@ -75,15 +75,15 @@ class LSFSimpleTests(TestCase):
         result = to_lsf(data)
         
         # Check type hints
-        self.assertIn("$t§int$f§int_val$f§42$r§", result)
-        self.assertIn("$t§float$f§float_val$f§3.14$r§", result)
-        self.assertIn("$t§bool$f§bool_val$f§True$r§", result)
-        self.assertIn("$t§null$f§null_val$f§$r§", result)
-        self.assertIn("$f§str_val$f§hello$r§", result)
+        self.assertIn("$t~int$f~int_val$f~42$r~", result)
+        self.assertIn("$t~float$f~float_val$f~3.14$r~", result)
+        self.assertIn("$t~bool$f~bool_val$f~True$r~", result)
+        self.assertIn("$t~null$f~null_val$f~$r~", result)
+        self.assertIn("$f~str_val$f~hello$r~", result)
         
         # Binary data is encoded as base64
         binary_str = base64.b64encode(b"hello world").decode('ascii')
-        self.assertIn(f"$t§bin$f§binary_val$f§{binary_str}$r§", result)
+        self.assertIn(f"$t~bin$f~binary_val$f~{binary_str}$r~", result)
         
     def test_to_lsf_empty_dict(self):
         """Test converting an empty dict to LSF."""
@@ -93,7 +93,7 @@ class LSFSimpleTests(TestCase):
         
     def test_from_lsf_basic(self):
         """Test converting basic LSF to Python dict."""
-        lsf_str = "$o§user$r§$f§name$f§John$r§$t§int$f§age$f§30$r§"
+        lsf_str = "$o~user$r~$f~name$f~John$r~$t~int$f~age$f~30$r~"
         result = from_lsf(lsf_str)
         
         expected = {
@@ -106,7 +106,7 @@ class LSFSimpleTests(TestCase):
         
     def test_from_lsf_multiple_objects(self):
         """Test converting LSF with multiple objects to Python dict."""
-        lsf_str = "$o§user$r§$f§name$f§John$r§$o§product$r§$f§name$f§Laptop$r§$t§float$f§price$f§999.99$r§"
+        lsf_str = "$o~user$r~$f~name$f~John$r~$o~product$r~$f~name$f~Laptop$r~$t~float$f~price$f~999.99$r~"
         result = from_lsf(lsf_str)
         
         expected = {
@@ -122,7 +122,7 @@ class LSFSimpleTests(TestCase):
         
     def test_from_lsf_with_list(self):
         """Test converting LSF with a list to Python dict."""
-        lsf_str = "$o§user$r§$f§name$f§John$r§$f§tags$f§admin$l§user$r§"
+        lsf_str = "$o~user$r~$f~name$f~John$r~$f~tags$f~admin$l~user$r~"
         result = from_lsf(lsf_str)
         
         expected = {
@@ -136,11 +136,11 @@ class LSFSimpleTests(TestCase):
     def test_from_lsf_with_typed_values(self):
         """Test converting LSF with typed values to Python dict."""
         lsf_str = (
-            "$o§data$r§"
-            "$t§int$f§int_val$f§42$r§"
-            "$t§float$f§float_val$f§3.14$r§"
-            "$t§bool$f§bool_val$f§true$r§"
-            "$t§null$f§null_val$f§$r§"
+            "$o~data$r~"
+            "$t~int$f~int_val$f~42$r~"
+            "$t~float$f~float_val$f~3.14$r~"
+            "$t~bool$f~bool_val$f~true$r~"
+            "$t~null$f~null_val$f~$r~"
         )
         result = from_lsf(lsf_str)
         
@@ -158,7 +158,7 @@ class LSFSimpleTests(TestCase):
         """Test converting LSF with binary data to Python dict."""
         binary_data = b'hello world'
         b64_data = base64.b64encode(binary_data).decode('ascii')
-        lsf_str = f"$o§file$r§$t§bin$f§content$f§{b64_data}$r§"
+        lsf_str = f"$o~file$r~$t~bin$f~content$f~{b64_data}$r~"
         
         result = from_lsf(lsf_str)
         self.assertEqual(result["file"]["content"], binary_data)

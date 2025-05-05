@@ -12,11 +12,11 @@ interface LSFObject {
 type LSFValue = string | number | boolean | Date | LSFValue[];
 
 const enum TokenType {
-  ObjectStart = "$o§".charCodeAt(0) << 16 | "$o§".charCodeAt(1) << 8 | "$o§".charCodeAt(2),
-  FieldSep = "$f§".charCodeAt(0) << 16 | "$f§".charCodeAt(1) << 8 | "$f§".charCodeAt(2),
-  RecordEnd = "$r§".charCodeAt(0) << 16 | "$r§".charCodeAt(1) << 8 | "$r§".charCodeAt(2),
-  ListSep = "$l§".charCodeAt(0) << 16 | "$l§".charCodeAt(1) << 8 | "$l§".charCodeAt(2),
-  TypeSep = "$t§".charCodeAt(0) << 16 | "$t§".charCodeAt(1) << 8 | "$t§".charCodeAt(2),
+  ObjectStart = "$o~".charCodeAt(0) << 16 | "$o~".charCodeAt(1) << 8 | "$o~".charCodeAt(2),
+  FieldSep = "$f~".charCodeAt(0) << 16 | "$f~".charCodeAt(1) << 8 | "$f~".charCodeAt(2),
+  RecordEnd = "$r~".charCodeAt(0) << 16 | "$r~".charCodeAt(1) << 8 | "$r~".charCodeAt(2),
+  ListSep = "$l~".charCodeAt(0) << 16 | "$l~".charCodeAt(1) << 8 | "$l~".charCodeAt(2),
+  TypeSep = "$t~".charCodeAt(0) << 16 | "$t~".charCodeAt(1) << 8 | "$t~".charCodeAt(2),
 }
 
 const enum ParserState {
@@ -64,7 +64,7 @@ export class UltraFastLSFParser {
         const objectName = this.readUntilToken(TokenType.RecordEnd);
         this.currentObject = objectName;
         this.document.objects[objectName] = { fields: {} };
-        this.consumeToken(); // Skip $r§
+        this.consumeToken(); // Skip $r~
         this.state = ParserState.InObject;
         break;
         
@@ -81,7 +81,7 @@ export class UltraFastLSFParser {
         if (this.pos >= this.buffer.length) return;
         
         this.currentKey = this.readUntilToken(TokenType.FieldSep);
-        this.consumeToken(); // Skip $f§
+        this.consumeToken(); // Skip $f~
         this.state = ParserState.ExpectFieldValue;
         break;
         
@@ -128,7 +128,7 @@ export class UltraFastLSFParser {
         this.pos = itemEnd;
         
         if (this.getToken(this.pos) === TokenType.ListSep) {
-          this.pos += 3; // Skip $l§
+          this.pos += 3; // Skip $l~
           start = this.pos;
         }
       }
@@ -141,16 +141,16 @@ export class UltraFastLSFParser {
     this.pos = end;
     
     if (hasType) {
-      this.consumeToken(); // Skip $t§
+      this.consumeToken(); // Skip $t~
       const typeCode = String.fromCharCode(this.buffer[this.pos]);
       this.pos++;
-      this.consumeToken(); // Skip $r§
+      this.consumeToken(); // Skip $r~
       this.state = ParserState.InObject;
       
       return this.parseTypedValue(rawValue, typeCode);
     }
     
-    this.consumeToken(); // Skip $r§
+    this.consumeToken(); // Skip $r~
     this.state = ParserState.InObject;
     return rawValue;
   }
@@ -194,7 +194,7 @@ export class UltraFastLSFParser {
 }
 
 // Usage example with performance measurement
-const lsfString = `$o§user$r§id$f§123$t§n$r§name$f§John$r§tags$f§admin$l§user$l§vip$r§`;
+const lsfString = `$o~user$r~id$f~123$t~n$r~name$f~John$r~tags$f~admin$l~user$l~vip$r~`;
 const parser = new UltraFastLSFParser(lsfString);
 
 const startTime = performance.now();

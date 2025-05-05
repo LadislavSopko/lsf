@@ -29,7 +29,7 @@ class LSFEncoder:
         Returns:
             self for chaining
         """
-        self._buffer.append(f"$o§{name}$r§")
+        self._buffer.append(f"$o~{name}$r~")
         self._current_object = name
         return self
     
@@ -50,7 +50,7 @@ class LSFEncoder:
         if self._current_object is None:
             raise ValueError("No object started. Call start_object() first.")
         
-        self._buffer.append(f"$f§{key}$f§{str(value)}$r§")
+        self._buffer.append(f"$f~{key}$f~{str(value)}$r~")
         return self
     
     def add_typed_field(self, key: str, value: Any, type_hint: str) -> 'LSFEncoder':
@@ -82,7 +82,7 @@ class LSFEncoder:
         if type_hint == "null":
             value = ""
         
-        self._buffer.append(f"$t§{type_hint}$f§{key}$f§{str(value)}$r§")
+        self._buffer.append(f"$t~{type_hint}$f~{key}$f~{str(value)}$r~")
         return self
     
     def add_list(self, key: str, values: List[Any]) -> 'LSFEncoder':
@@ -104,10 +104,10 @@ class LSFEncoder:
         
         if not values:
             # Empty list
-            self._buffer.append(f"$f§{key}$f§$r§")
+            self._buffer.append(f"$f~{key}$f~$r~")
         else:
-            items = "$l§".join(str(v) for v in values)
-            self._buffer.append(f"$f§{key}$f§{items}$r§")
+            items = "$l~".join(str(v) for v in values)
+            self._buffer.append(f"$f~{key}$f~{items}$r~")
         
         return self
     
@@ -121,7 +121,7 @@ class LSFEncoder:
         Returns:
             self for chaining
         """
-        self._buffer.append(f"$e§{message}$r§")
+        self._buffer.append(f"$e~{message}$r~")
         return self
     
     def end_transaction(self) -> 'LSFEncoder':
@@ -131,7 +131,7 @@ class LSFEncoder:
         Returns:
             self for chaining
         """
-        self._buffer.append("$x§$r§")
+        self._buffer.append("$x~$r~")
         return self
     
     def to_string(self) -> str:

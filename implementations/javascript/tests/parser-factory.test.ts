@@ -4,11 +4,11 @@ import { UltraFastLSFParser } from '../src/fast-parser';
 import { HyperFastLSFParser } from '../src/hyper-fast-parser';
 
 describe('LSF Parser Factory', () => {
-  const smallLSF = '$o§user$r§name$f§John$r§age$f§30$r§';
+  const smallLSF = '$o~user$r~name$f~John$r~age$f~30$r~';
   // Medium-sized LSF for testing auto-selection between UltraFastLSFParser and standard parser
-  const mediumLSF = `$o§data$r§${Array(200).fill('key$f§value$r§').join('')}`;
+  const mediumLSF = `$o~data$r~${Array(200).fill('key$f~value$r~').join('')}`;
   // Very large LSF for testing auto-selection with HyperFastLSFParser
-  const largeLSF = `$o§data$r§${Array(2000).fill('key$f§value$r§').join('')}`;
+  const largeLSF = `$o~data$r~${Array(2000).fill('key$f~value$r~').join('')}`;
   
   it('should create a standard parser', () => {
     const parser = getParser(smallLSF, LSFParserType.STANDARD);
@@ -105,7 +105,7 @@ describe('LSF Parser Factory', () => {
   });
   
   it('should handle deeply nested objects', () => {
-    const nestedLSF = '$o§parent$r§name$f§Parent$r§$o§child1$r§name$f§Child 1$r§$o§grandchild$r§name$f§Grandchild$r§';
+    const nestedLSF = '$o~parent$r~name$f~Parent$r~$o~child1$r~name$f~Child 1$r~$o~grandchild$r~name$f~Grandchild$r~';
     
     const result = parse(nestedLSF);
     
@@ -115,7 +115,7 @@ describe('LSF Parser Factory', () => {
   });
   
   it('should handle various data types', () => {
-    const typedLSF = '$o§data$r§int$f§42$t§n$r§float$f§3.14$t§f$r§bool$f§true$t§b$r§date$f§2023-01-15T10:30:00Z$t§d$r§string$f§Hello World$r§';
+    const typedLSF = '$o~data$r~int$f~42$t~n$r~float$f~3.14$t~f$r~bool$f~true$t~b$r~date$f~2023-01-15T10:30:00Z$t~d$r~string$f~Hello World$r~';
     
     const result = parse(typedLSF);
     
@@ -127,7 +127,7 @@ describe('LSF Parser Factory', () => {
   });
   
   it('should handle lists', () => {
-    const lsfWithList = '$o§user$r§tags$f§admin$l§user$l§editor$r§';
+    const lsfWithList = '$o~user$r~tags$f~admin$l~user$l~editor$r~';
     
     const result = parse(lsfWithList);
     
@@ -135,7 +135,7 @@ describe('LSF Parser Factory', () => {
   });
   
   it('should handle complex mixed content', () => {
-    const complex = '$o§user$r§id$f§123$t§n$r§name$f§John$r§roles$f§admin$l§editor$r§active$f§true$t§b$r§$o§settings$r§theme$f§dark$r§notifications$f§true$t§b$r§$o§profile$r§bio$f§A software developer$r§joined$f§2023-01-01T00:00:00Z$t§d$r§';
+    const complex = '$o~user$r~id$f~123$t~n$r~name$f~John$r~roles$f~admin$l~editor$r~active$f~true$t~b$r~$o~settings$r~theme$f~dark$r~notifications$f~true$t~b$r~$o~profile$r~bio$f~A software developer$r~joined$f~2023-01-01T00:00:00Z$t~d$r~';
     
     const result = parse(complex);
     
@@ -150,7 +150,7 @@ describe('LSF Parser Factory', () => {
   });
   
   it('should handle whitespace between records', () => {
-    const lsfWithWhitespace = '$o§user$r§name$f§John$r§age$f§30$r§';
+    const lsfWithWhitespace = '$o~user$r~name$f~John$r~age$f~30$r~';
     
     const result = parse(lsfWithWhitespace);
     
@@ -163,7 +163,7 @@ describe('LSF Parser Factory', () => {
   });
   
   it('should handle version markers', () => {
-    const lsfWithVersion = '$v§1.3$r§$o§user$r§name$f§John$r§';
+    const lsfWithVersion = '$v~1.3$r~$o~user$r~name$f~John$r~';
     
     const result = parse(lsfWithVersion);
     

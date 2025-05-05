@@ -28,12 +28,12 @@ LSF directly addresses these pain points through a format engineered specificall
 
 LSF is designed with simplicity and robustness as core principles:
 
-1. **Object Marking**: Each object is explicitly marked with a begin token (`$o§`) and name
-2. **Field Separation**: Fields use a consistent separator pattern (`$f§key$f§value$r§`)
-3. **Record Termination**: Each logical unit ends with a record terminator (`$r§`)
-4. **List Support**: Simple list handling with list item separators (`$l§`)
-5. **Error Marking**: Explicit error markers (`$e§`) for graceful error handling
-6. **Type Hinting**: Optional type hints (`$t§`) for proper data typing
+1. **Object Marking**: Each object is explicitly marked with a begin token (`$o~`) and name
+2. **Field Separation**: Fields use a consistent separator pattern (`$f~key$f~value$r~`)
+3. **Record Termination**: Each logical unit ends with a record terminator (`$r~`)
+4. **List Support**: Simple list handling with list item separators (`$l~`)
+5. **Error Marking**: Explicit error markers (`$e~`) for graceful error handling
+6. **Type Hinting**: Optional type hints (`$t~`) for proper data typing
 
 When prompting an LLM, developers can request output in LSF format with a simple prompt template. The LLM generates the structured data following the LSF patterns, which can then be reliably parsed even if small mistakes are present.
 

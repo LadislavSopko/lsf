@@ -3,7 +3,7 @@ import { UltraFastLSFParser } from '../src/fast-parser';
 
 describe('UltraFastLSFParser', () => {
   it('should parse a basic object', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~';
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -15,7 +15,7 @@ describe('UltraFastLSFParser', () => {
   });
   
   it('should parse multiple fields', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§age$f§30$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~age$f~30$r~';
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -28,7 +28,7 @@ describe('UltraFastLSFParser', () => {
   });
   
   it('should parse multiple objects', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§$o§product$r§name$f§Laptop$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~$o~product$r~name$f~Laptop$r~';
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -43,7 +43,7 @@ describe('UltraFastLSFParser', () => {
   });
   
   it('should parse a list', () => {
-    const lsfStr = '$o§user$r§tags$f§admin$l§user$l§editor$r§';
+    const lsfStr = '$o~user$r~tags$f~admin$l~user$l~editor$r~';
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -55,7 +55,7 @@ describe('UltraFastLSFParser', () => {
   });
   
   it('should parse an empty list', () => {
-    const lsfStr = '$o§user$r§tags$f§$r§';
+    const lsfStr = '$o~user$r~tags$f~$r~';
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -67,7 +67,7 @@ describe('UltraFastLSFParser', () => {
   });
   
   it('should parse typed integers (n)', () => {
-    const lsfStr = '$o§user$r§age$f§30$t§n$r§';
+    const lsfStr = '$o~user$r~age$f~30$t~n$r~';
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -80,7 +80,7 @@ describe('UltraFastLSFParser', () => {
   });
   
   it('should parse typed floats (f)', () => {
-    const lsfStr = '$o§product$r§price$f§19.99$t§f$r§';
+    const lsfStr = '$o~product$r~price$f~19.99$t~f$r~';
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -93,7 +93,7 @@ describe('UltraFastLSFParser', () => {
   });
   
   it('should parse typed booleans (b)', () => {
-    const lsfStr = '$o§user$r§active$f§true$t§b$r§';
+    const lsfStr = '$o~user$r~active$f~true$t~b$r~';
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -107,7 +107,7 @@ describe('UltraFastLSFParser', () => {
   
   it('should parse typed dates (d)', () => {
     const isoDate = '2023-01-15T10:30:00Z';
-    const lsfStr = `$o§event$r§created$f§${isoDate}$t§d$r§`;
+    const lsfStr = `$o~event$r~created$f~${isoDate}$t~d$r~`;
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -124,7 +124,7 @@ describe('UltraFastLSFParser', () => {
   });
   
   it('should parse typed strings (s)', () => {
-    const lsfStr = '$o§user$r§name$f§John$t§s$r§';
+    const lsfStr = '$o~user$r~name$f~John$t~s$r~';
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -137,7 +137,7 @@ describe('UltraFastLSFParser', () => {
   });
   
   it('should parse version marker', () => {
-    const lsfStr = '$v§1.3$r§$o§user$r§name$f§John$r§';
+    const lsfStr = '$v~1.3$r~$o~user$r~name$f~John$r~';
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -150,7 +150,7 @@ describe('UltraFastLSFParser', () => {
   });
   
   it('should handle whitespace in values', () => {
-    const lsfStr = '$o§user$r§name$f§John Doe$r§bio$f§A software developer\nwith multiple lines$r§';
+    const lsfStr = '$o~user$r~name$f~John Doe$r~bio$f~A software developer\nwith multiple lines$r~';
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -164,9 +164,9 @@ describe('UltraFastLSFParser', () => {
   
   it('should handle whitespace between records', () => {
     // In v1.3, whitespace is allowed between records
-    const lsfStr = `$o§user$r§
-      name$f§John$r§ 
-      age$f§30$r§`;
+    const lsfStr = `$o~user$r~
+      name$f~John$r~ 
+      age$f~30$r~`;
     const parser = new UltraFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -211,12 +211,12 @@ describe('UltraFastLSFParser', () => {
     it('should handle deeply nested objects', () => {
       // In LSF v1.3, objects aren't nested, they're sequential
       const sequentialNestedLSF = `
-        $o§parent$r§
-        name$f§Parent$r§
-        $o§child1$r§
-        name$f§Child 1$r§
-        $o§grandchild$r§
-        name$f§Grandchild$r§
+        $o~parent$r~
+        name$f~Parent$r~
+        $o~child1$r~
+        name$f~Child 1$r~
+        $o~grandchild$r~
+        name$f~Grandchild$r~
       `;
       
       const parser = new UltraFastLSFParser(sequentialNestedLSF);
@@ -262,23 +262,23 @@ function generateComplexLSF(): string {
   let lsf = '';
   
   // Add user object
-  lsf += '$o§user$r§';
-  lsf += 'id$f§12345$t§n$r§';
-  lsf += 'name$f§John Doe$r§';
-  lsf += 'email$f§john@example.com$r§';
-  lsf += 'active$f§true$t§b$r§';
-  lsf += 'balance$f§123.45$t§f$r§';
-  lsf += 'created$f§2023-01-01T00:00:00Z$t§d$r§';
-  lsf += 'tags$f§admin$l§user$l§premium$r§';
+  lsf += '$o~user$r~';
+  lsf += 'id$f~12345$t~n$r~';
+  lsf += 'name$f~John Doe$r~';
+  lsf += 'email$f~john@example.com$r~';
+  lsf += 'active$f~true$t~b$r~';
+  lsf += 'balance$f~123.45$t~f$r~';
+  lsf += 'created$f~2023-01-01T00:00:00Z$t~d$r~';
+  lsf += 'tags$f~admin$l~user$l~premium$r~';
   
   // Add multiple product objects
   for (let i = 0; i < 10; i++) {
-    lsf += `$o§product${i}$r§`;
-    lsf += `id$f§${10000 + i}$t§n$r§`;
-    lsf += `name$f§Product ${i}$r§`;
-    lsf += `price$f§${(i + 1) * 9.99}$t§f$r§`;
-    lsf += `inStock$f§${i % 2 === 0 ? 'true' : 'false'}$t§b$r§`;
-    lsf += `tags$f§tag${i}$l§category${i % 3}$r§`;
+    lsf += `$o~product${i}$r~`;
+    lsf += `id$f~${10000 + i}$t~n$r~`;
+    lsf += `name$f~Product ${i}$r~`;
+    lsf += `price$f~${(i + 1) * 9.99}$t~f$r~`;
+    lsf += `inStock$f~${i % 2 === 0 ? 'true' : 'false'}$t~b$r~`;
+    lsf += `tags$f~tag${i}$l~category${i % 3}$r~`;
   }
   
   return lsf;
@@ -288,10 +288,10 @@ function generateLargeLSF(itemCount: number): string {
   let lsf = '';
   
   for (let i = 0; i < itemCount; i++) {
-    lsf += `$o§item${i}$r§`;
-    lsf += `id$f§${i}$t§n$r§`;
-    lsf += `name$f§Item ${i}$r§`;
-    lsf += `value$f§${i * 10}$t§n$r§`;
+    lsf += `$o~item${i}$r~`;
+    lsf += `id$f~${i}$t~n$r~`;
+    lsf += `name$f~Item ${i}$r~`;
+    lsf += `value$f~${i * 10}$t~n$r~`;
   }
   
   return lsf;

@@ -16,10 +16,10 @@ import { LSFDecoder } from './decoder';
  * 
  * @example
  * ```ts
- * lsfToJson("$o§user$r§$f§name$f§John$r§$f§age$f§30$r§")
+ * lsfToJson("$o~user$r~$f~name$f~John$r~$f~age$f~30$r~")
  * // Returns: '{"user":{"name":"John","age":"30"}}'
  * 
- * lsfToJson("$o§user$r§$f§name$f§John$r§", 2)
+ * lsfToJson("$o~user$r~$f~name$f~John$r~", 2)
  * // Returns pretty-printed JSON with 2-space indentation
  * ```
  */
@@ -46,7 +46,7 @@ export function lsfToJson(
  * 
  * @example
  * ```ts
- * lsfToJsonPretty("$o§user$r§$f§name$f§John$r§")
+ * lsfToJsonPretty("$o~user$r~$f~name$f~John$r~")
  * // Returns: pretty-printed JSON with 2-space indentation
  * ```
  */

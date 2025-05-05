@@ -66,7 +66,7 @@ This document summarizes the changes made to implement the LSF v1.3 format in Ty
 ### Format Changes
 
 1. **Field Format Simplification**:
-   - Changed from `$f§key$f§value$r§` to `key$f§value$r§`
+   - Changed from `$f~key$f~value$r~` to `key$f~value$r~`
    - Removes one token per field, significantly reducing format size
 
 2. **Type Codes**:
@@ -78,11 +78,11 @@ This document summarizes the changes made to implement the LSF v1.3 format in Ty
      - `s`: String values (explicit type)
 
 3. **Type Marker Position**:
-   - Changed from `$t§type$f§key$f§value$r§` to `key$f§value$t§type$r§`
+   - Changed from `$t~type$f~key$f~value$r~` to `key$f~value$t~type$r~`
    - Puts type information at the end as a suffix rather than a prefix
 
 4. **Removed Transaction Markers**:
-   - Removed `$x§$r§` transaction markers
+   - Removed `$x~$r~` transaction markers
    - Objects can still be sequential in the format, but no explicit grouping is needed
 
 5. **Removed NULL Value Token**:

@@ -6,7 +6,7 @@
 // Constants
 const CHAR = {
   DOLLAR: 36,
-  SECTION: 167,
+  TILDE: 126,
   O: 111, F: 102, R: 114, L: 108, T: 116, V: 118,
   N: 110, B: 98, D: 100, S: 115
 } as const;
@@ -107,24 +107,22 @@ export class LSFDOMParser {
    */
   private tokenize(): void {
     const len = this.buffer.length;
-    let pos = 0;
+    let currentPos = 0;
     this.tokenCount = 0;
-    
-    while (pos + 2 < len) {
-      if (this.buffer[pos] === CHAR.DOLLAR && this.buffer[pos + 2] === CHAR.SECTION) {
-        const tokenChar = this.buffer[pos + 1];
-        
-        // Store token type and position
+
+    while (currentPos + 2 < len) {
+      if (this.buffer[currentPos] === CHAR.DOLLAR && this.buffer[currentPos + 2] === CHAR.TILDE) {
+        const tokenChar = this.buffer[currentPos + 1];
+        const tokenStart = currentPos;
+
         this.tokens[this.tokenCount] = tokenChar;
-        this.tokenPositions[this.tokenCount] = pos;
+        this.tokenPositions[this.tokenCount] = tokenStart;
         this.tokenCount++;
         
-        // Grow arrays if needed (unlikely)
-        if (this.tokenCount >= this.tokens.length) {
-          this.growTokenArrays();
-        }
+        currentPos = tokenStart + 3; // Jump position to after the token
+      } else {
+        currentPos++;
       }
-      pos++;
     }
   }
   
@@ -136,124 +134,146 @@ export class LSFDOMParser {
     
     const nodeStack: number[] = [];
     let currentObject = -1;
-    let currentField = -1;
     let rootNode = -1;
     let tokenPos = 0;
-    
+    const bufferEnd = this.buffer.length;
+
     this.nodeCount = 0;
     this.valueCount = 0;
     this.childrenCount = 0;
     
     while (tokenPos < this.tokenCount) {
-      const token = this.tokens[tokenPos];
+      const tokenType = this.tokens[tokenPos];
       const tokenStart = this.tokenPositions[tokenPos];
+      const dataStart = tokenStart + 3; // Data always starts after the 3-byte delimiter
       
-      switch (token) {
-        case CHAR.O: { // Object ($o§)
+      // Determine the end position for data following this token
+      const nextTokenStart = (tokenPos + 1 < this.tokenCount) ? this.tokenPositions[tokenPos + 1] : bufferEnd;
+      let dataLength = nextTokenStart - dataStart;
+      if (dataLength < 0) dataLength = 0;
+
+      switch (tokenType) {
+        case CHAR.O: { // Object ($o~)
           const nodeIndex = this.allocateNode();
           const node = this.nodes[nodeIndex];
-          
           node.type = 0; // object
           node.childrenStart = this.childrenCount;
           node.childrenCount = 0;
           
-          // Find object name
-          const nameStart = tokenStart + 3;
-          const nameEnd = this.findNextTokenPos(tokenPos + 1, CHAR.R);
-          node.nameStart = nameStart;
-          node.nameLength = nameEnd - nameStart;
+          // Object name is the data following this $o~ token
+          node.nameStart = dataStart;
+          node.nameLength = dataLength;
           
-          // Set as root if first object
-          if (rootNode === -1) {
-            rootNode = nodeIndex;
-          }
-          
-          // Add to parent if exists
-          if (nodeStack.length > 0) {
-            this.addChild(nodeStack[nodeStack.length - 1], nodeIndex);
-          }
+          if (rootNode === -1) rootNode = nodeIndex;
+          if (nodeStack.length > 0) this.addChild(nodeStack[nodeStack.length - 1], nodeIndex);
           
           nodeStack.push(nodeIndex);
           currentObject = nodeIndex;
+          tokenPos++;
+          break;
+        }
+        
+        case CHAR.F: { // Field separator ($f~)
+          if (currentObject < 0 || tokenPos === 0) { // Field outside object or $f~ is first token
+              tokenPos++;
+              break; 
+          }
           
-          // Skip to after $r§
-          tokenPos = this.findNextTokenIndex(tokenPos + 1, CHAR.R) + 1;
-          break;
-        }
-        
-        case CHAR.F: { // Field separator ($f§)
-          if (currentField >= 0) {
-            // Find value
-            const valueStart = tokenStart + 3;
-            const nextToken = this.findNextValueToken(tokenPos + 1);
-            
-            const valueNode = this.allocateNode();
-            const field = this.nodes[currentField];
-            
-            if (nextToken.type === CHAR.L) { // List
-              const listValueNode = this.nodes[valueNode];
-              listValueNode.type = 3; // list
-              const list = this.parseListSpans(valueStart, tokenPos + 1);
-              listValueNode.valueStart = valueStart;
-              listValueNode.valueLength = list.end - valueStart;
-              listValueNode.childrenStart = list.spanStart;
-              listValueNode.childrenCount = list.spanCount;
-              tokenPos = list.nextTokenPos;
-            } else { // Single value
-              const singleValueNode = this.nodes[valueNode];
-              singleValueNode.type = 2; // value
-              singleValueNode.valueStart = valueStart;
-              singleValueNode.valueLength = nextToken.pos - valueStart;
+          // Field KEY is the data between the previous token's end and this token's start
+          const prevTokenEnd = this.tokenPositions[tokenPos - 1] + 3;
+          const keyDataStart = prevTokenEnd;
+          let keyDataLength = tokenStart - keyDataStart;
+          if (keyDataLength < 0) keyDataLength = 0;
+                    
+          if (keyDataLength <= 0) { // No key between tokens?
+              tokenPos++; 
+              break; 
+          }
+
+          const fieldIndex = this.allocateNode();
+          const field = this.nodes[fieldIndex];
+          field.type = 1; // field
+          field.nameStart = keyDataStart;
+          field.nameLength = keyDataLength;
+          field.childrenStart = this.childrenCount;
+          field.childrenCount = 0;
+          
+          // Field VALUE is the data AFTER THIS $f~ token (or a list/typed value)
+          const valueNodeIndex = this.allocateNode();
+          const valueNode = this.nodes[valueNodeIndex];
+          const valueDataStart = dataStart;
+          // Use the dataLength calculated at the start of the loop for the data following $f~
+          let valueDataLength = dataLength; 
+
+          // Check next token to see if it's a list or type hint
+          const nextTokenPos = tokenPos + 1;
+          if (nextTokenPos < this.tokenCount) {
+              const nextTokenType = this.tokens[nextTokenPos];
+              const nextTokenActualStart = this.tokenPositions[nextTokenPos]; // Use the actual start pos
               
-              // Check for type hint
-              if (nextToken.type === CHAR.T) {
-                const typePos = nextToken.pos + 3;
-                singleValueNode.typeHint = this.buffer[typePos];
-                tokenPos = this.findNextTokenIndex(this.tokens.indexOf(nextToken.type, tokenPos), CHAR.R) + 1;
-              } else {
-                const currentNextTokenIndex = this.tokens.indexOf(nextToken.type, tokenPos);
-                tokenPos = currentNextTokenIndex + 1;
+              if (nextTokenType === CHAR.L) { // LIST
+                  valueNode.type = 3; // list
+                  // List content starts after $f~ (valueDataStart) and ends before $l~ (nextTokenActualStart)
+                  let listContentLength = nextTokenActualStart - valueDataStart;
+                  if (listContentLength < 0) listContentLength = 0;
+                  const list = this.parseListSpans(valueDataStart, listContentLength, nextTokenPos); // Pass start index of first $l~
+                  valueNode.valueStart = valueDataStart; // Span of the raw list content area
+                  valueNode.valueLength = listContentLength;
+                  valueNode.childrenStart = list.spanStart; // Indices into value spans array
+                  valueNode.childrenCount = list.spanCount;
+                  tokenPos = list.nextTokenPos; // Advance past the list
+              } else if (nextTokenType === CHAR.T) { // TYPE HINT
+                  valueNode.type = 2; // value
+                  // Value data is between $f~ and $t~
+                  valueNode.valueStart = valueDataStart;
+                  let typedValueLength = nextTokenActualStart - valueDataStart;
+                  valueNode.valueLength = typedValueLength < 0 ? 0 : typedValueLength;
+                  
+                  // Type hint character is data AFTER the $t~ token
+                  const typeHintDataStart = nextTokenActualStart + 3;
+                  const typeHintNextTokenStart = (nextTokenPos + 1 < this.tokenCount) ? this.tokenPositions[nextTokenPos + 1] : bufferEnd;
+                  let typeHintDataLength = typeHintNextTokenStart - typeHintDataStart;
+                  if (typeHintDataLength > 0) {
+                      valueNode.typeHint = this.buffer[typeHintDataStart];
+                  } else {
+                      valueNode.typeHint = 0; // No type hint char found
+                  }
+                  tokenPos = nextTokenPos + 1; // Skip $f~ token AND $t~ token
+              } else { // SIMPLE VALUE (next token is $r~ or another $f~)
+                  valueNode.type = 2; // value
+                  valueNode.valueStart = valueDataStart;
+                  valueNode.valueLength = valueDataLength; // Use length calculated at loop start
+                  tokenPos++; // Skip $f~ token
               }
-            }
-            
-            this.addChild(currentField, valueNode);
-            this.addChild(currentObject, currentField);
-            currentField = -1;
-          } else {
-            tokenPos++;
+          } else { // $f~ is last token - simple value
+              valueNode.type = 2; // value
+              valueNode.valueStart = valueDataStart;
+              valueNode.valueLength = dataLength; // Use length calculated at loop start
+              tokenPos++; // Skip $f~ token
           }
+          
+          this.addChild(fieldIndex, valueNodeIndex);
+          this.addChild(currentObject, fieldIndex);
           break;
         }
         
-        case CHAR.R: { // Record end ($r§)
-          if (nodeStack.length > 0 && this.nodes[nodeStack[nodeStack.length - 1]].type === 0) {
-            nodeStack.pop();
-            currentObject = nodeStack.length > 0 ? nodeStack[nodeStack.length - 1] : -1;
+        case CHAR.R: { // Record end ($r~)
+          if (nodeStack.length > 0) {
+             const topNodeIndex = nodeStack[nodeStack.length - 1];
+             if (this.nodes[topNodeIndex].type === 0) { // Ensure it's an object
+                 nodeStack.pop();
+                 currentObject = nodeStack.length > 0 ? nodeStack[nodeStack.length - 1] : -1;
+             }
           }
           tokenPos++;
           break;
         }
         
-        case CHAR.V: { // Version - skip
-          tokenPos = this.findNextTokenIndex(tokenPos + 1, CHAR.R) + 1;
-          break;
-        }
-        
-        default:
+        // Other tokens ($v~, $t~, $l~) are generally skipped here
+        // as their data/effect is handled when processing the preceding $f~ or $o~
+        default: 
           tokenPos++;
           break;
-      }
-      
-      // Check for field key between tokens
-      const key = this.findKeyBetweenTokens(tokenPos - 1, tokenPos);
-      if (key && currentObject >= 0) {
-        currentField = this.allocateNode();
-        const field = this.nodes[currentField];
-        field.type = 1; // field
-        field.nameStart = key.start;
-        field.nameLength = key.length;
-        field.childrenStart = this.childrenCount;
-        field.childrenCount = 0;
       }
     }
     
@@ -302,97 +322,46 @@ export class LSFDOMParser {
   }
   
   /**
-   * Helper methods for token searching
-   */
-  private findNextTokenPos(startPos: number, tokenType: number): number {
-    for (let i = startPos; i < this.tokenCount; i++) {
-      if (this.tokens[i] === tokenType) {
-        return this.tokenPositions[i];
-      }
-    }
-    return this.buffer.length;
-  }
-  
-  private findNextTokenIndex(startPos: number, tokenType: number): number {
-    for (let i = startPos; i < this.tokenCount; i++) {
-      if (this.tokens[i] === tokenType) {
-        return i;
-      }
-    }
-    return this.tokenCount;
-  }
-  
-  private findNextValueToken(startPos: number): { type: number; pos: number } {
-    for (let i = startPos; i < this.tokenCount; i++) {
-      const type = this.tokens[i];
-      if (type === CHAR.R || type === CHAR.T || type === CHAR.L) {
-        return { type, pos: this.tokenPositions[i] };
-      }
-    }
-    return { type: 0, pos: this.buffer.length };
-  }
-  
-  /**
-   * Find the text content (key) between two token indices.
-   */
-  private findKeyBetweenTokens(prevTokenIndex: number, currentTokenIndex: number): { start: number; length: number } | null {
-    if (prevTokenIndex < 0 || currentTokenIndex <= prevTokenIndex || currentTokenIndex >= this.tokenCount) {
-      return null;
-    }
-    
-    const start = this.tokenPositions[prevTokenIndex] + 3; // Position after the previous token's $x§
-    const end = this.tokenPositions[currentTokenIndex];   // Position at the start of the current token's $x§
-    
-    if (start >= end) {
-        return null; // No content between tokens
-    }
-    
-    return { start, length: end - start };
-  }
-  
-  /**
    * Parse list items and store their spans.
+   * listContentLength is length of the segment between $f~ (exclusive) and first $l~ (exclusive).
+   * firstListTokenIndex is the index of that first $l~ token in the tokens array.
    */
-  private parseListSpans(listStartPos: number, listTokenIndex: number): { spanStart: number; spanCount: number; end: number; nextTokenPos: number } {
+  private parseListSpans(listContentStart: number, listContentLength: number, firstListTokenIndex: number): { spanStart: number; spanCount: number; nextTokenPos: number } {
     const spanStartIndex = this.valueCount;
-    let currentTokenIndex = listTokenIndex;
-    let lastPos = listStartPos;
+    let currentTokenIndex = firstListTokenIndex;
+    let lastItemStart = listContentStart; // First item starts where the list content segment starts
+    const listContentEnd = listContentStart + listContentLength; // Calculate absolute end
 
     while (currentTokenIndex < this.tokenCount) {
       const tokenType = this.tokens[currentTokenIndex];
-      const tokenPos = this.tokenPositions[currentTokenIndex];
+      const tokenStart = this.tokenPositions[currentTokenIndex];
 
-      if (tokenType === CHAR.L) { // List item separator
-        if (tokenPos > lastPos) { // Store span if content exists
-          this.allocateValueSpan(lastPos, tokenPos - lastPos);
+      if (tokenType === CHAR.L) { // List item separator ($l~)
+        // Data for the previous item ends here
+        let itemLength = tokenStart - lastItemStart;
+        if (itemLength > 0) {
+            this.allocateValueSpan(lastItemStart, itemLength);
         }
-        lastPos = tokenPos + 3; // Move past $l§
+        lastItemStart = tokenStart + 3; // Next item starts after this $l~
         currentTokenIndex++;
-      } else if (tokenType === CHAR.F || tokenType === CHAR.R) { // End of list
-        if (tokenPos > lastPos) { // Store last item span
-          this.allocateValueSpan(lastPos, tokenPos - lastPos);
-        }
-        return {
-          spanStart: spanStartIndex,
-          spanCount: this.valueCount - spanStartIndex,
-          end: tokenPos, // Position where list content ends
-          nextTokenPos: currentTokenIndex // Index of the token that ended the list
-        };
-      } else {
-        // Should not happen in a valid list, maybe throw error or log?
-        currentTokenIndex++; // Skip unexpected token
+      } else { 
+        // Any other token ($f~, $r~, $t~, $o~, etc.) terminates the list parsing.
+        break; 
       }
     }
 
-    // Reached end of tokens unexpectedly
-    if (this.buffer.length > lastPos) { // Store trailing content if any
-      this.allocateValueSpan(lastPos, this.buffer.length - lastPos);
+    // Process the last item (data between last $l~ start and the start of the terminating token)
+    const terminatorTokenStart = (currentTokenIndex < this.tokenCount) ? this.tokenPositions[currentTokenIndex] : this.buffer.length;
+    let lastItemLength = terminatorTokenStart - lastItemStart;
+    if (lastItemLength > 0) {
+        this.allocateValueSpan(lastItemStart, lastItemLength);
     }
+    
+    // currentTokenIndex is the index of the token that terminated the list
     return {
       spanStart: spanStartIndex,
       spanCount: this.valueCount - spanStartIndex,
-      end: this.buffer.length,
-      nextTokenPos: this.tokenCount
+      nextTokenPos: currentTokenIndex 
     };
   }
 

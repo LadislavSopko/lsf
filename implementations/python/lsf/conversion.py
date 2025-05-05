@@ -27,10 +27,10 @@ def lsf_to_json(
         JSON formatted string
         
     Example:
-        >>> lsf_to_json("$o§user$r§$f§name$f§John$r§$f§age$f§30$r§")
+        >>> lsf_to_json("$o~user$r~$f~name$f~John$r~$f~age$f~30$r~")
         '{"user":{"name":"John","age":"30"}}'
         
-        >>> lsf_to_json("$o§user$r§$f§name$f§John$r§", indent=2)
+        >>> lsf_to_json("$o~user$r~$f~name$f~John$r~", indent=2)
         '{
           "user": {
             "name": "John"
@@ -58,7 +58,7 @@ def lsf_to_json_pretty(lsf_string: str) -> str:
         Pretty-printed JSON string
         
     Example:
-        >>> lsf_to_json_pretty("$o§user$r§$f§name$f§John$r§")
+        >>> lsf_to_json_pretty("$o~user$r~$f~name$f~John$r~")
         '{
           "user": {
             "name": "John"

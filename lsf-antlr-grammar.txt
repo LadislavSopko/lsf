@@ -22,19 +22,19 @@ key         : IDENTIFIER ;
 value       : STRING ;
 
 // Lexer rules
-OBJ         : '$o§' ;
-FLD         : '$f§' ;
-REC         : '$r§' ;
-LIS         : '$l§' ;
-TYP         : '$t§' ;
+OBJ         : '$o~' ;
+FLD         : '$f~' ;
+REC         : '$r~' ;
+LIS         : '$l~' ;
+TYP         : '$t~' ;
 
 IDENTIFIER  : [a-zA-Z_][a-zA-Z0-9_-]* ;
 
-STRING      : ~('$'|'§')+ ;  // Any char except our separators
+STRING      : ~('$'|'~')+ ;  // Any char except our separators
 
 // Skip whitespace between tokens
 WS          : [ \t\n\r]+ -> skip ;
 
 // Handle potential separator conflicts in strings
 fragment
-ESC         : '\\$' | '\\§' ;
+ESC         : '\\$' | '\\~' ;

@@ -4,8 +4,8 @@
 
 ### Major Features
 - **Type System**: Added support for `int`, `float`, `bool`, `null`, and `bin` types
-- **Error Recovery**: Introduced `$e§` marker for graceful error handling
-- **Transactions**: Added `$x§` for transaction boundaries
+- **Error Recovery**: Introduced `$e~` marker for graceful error handling
+- **Transactions**: Added `$x~` for transaction boundaries
 - **Binary Support**: Base64 encoding for binary data
 
 ### Performance Improvements

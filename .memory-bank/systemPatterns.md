@@ -28,12 +28,12 @@ graph TD
 
 ## Key Technical Decisions
 
-### Token Design (`$x§` pattern)
+### Token Design (`$x~` pattern)
 
 LSF uses a distinct pattern for all tokens:
 - Dollar sign prefix (`$`)
 - 1-2 character identifier (e.g., `o`, `f`, `t`, `r`, `l`, `e`, `x`, `v`)
-- Section sign suffix (`§`)
+- Section sign suffix (`~`)
 
 This pattern was chosen specifically because:
 - Extremely unlikely to appear in normal text
@@ -53,14 +53,14 @@ LSF intentionally uses a flat structure with no nesting capabilities:
 
 Error handling is built into the format itself:
 - Each record is independent
-- Error markers (`$e§`) can be used to annotate problems
+- Error markers (`$e~`) can be used to annotate problems
 - Parsing continues even when errors are encountered
 - Provides both the successfully parsed data and error details
 
 ### Type System
 
 LSF v1.2 introduces an optional type system:
-- Type hints (`$t§`) provide explicit type information
+- Type hints (`$t~`) provide explicit type information
 - Supports common types: int, float, bool, null, bin, str
 - Binary data uses base64 encoding to avoid token collisions
 - Types are optional, defaulting to string representation
@@ -204,9 +204,9 @@ The Python implementation includes several optimization patterns:
 def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
     # Pre-compile regex patterns
-    self._token_pattern = re.compile(r'\$([otefxv])§(.*?)(?=\$[otefxv]§|\Z)')
-    self._record_separator = re.compile(r'\$r§')
-    self._list_separator = re.compile(r'\$l§')
+    self._token_pattern = re.compile(r'\$([otefxv])~(.*?)(?=\$[otefxv]~|\Z)')
+    self._record_separator = re.compile(r'\$r~')
+    self._list_separator = re.compile(r'\$l~')
 ```
 
 ### Lookup Table Pattern
@@ -232,7 +232,7 @@ def decode(self, lsf_string: str) -> Dict[str, Any]:
         return {}
         
     # Fast path for simple patterns
-    if "$o§" not in lsf_string:
+    if "$o~" not in lsf_string:
         return {}
 ```
 
@@ -246,7 +246,7 @@ def decode(self, lsf_string: str) -> Dict[str, Any]:
     
     while i < length:
         # Look for token markers
-        if lsf_string[i] == '$' and i + 2 < length and lsf_string[i+2] == '§':
+        if lsf_string[i] == '$' and i + 2 < length and lsf_string[i+2] == '~':
             # Process token directly without regex
 ```
 

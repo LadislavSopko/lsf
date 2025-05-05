@@ -37,7 +37,7 @@ export class LSFDecoder {
      * @example
      * ```ts
      * const decoder = new LSFDecoder();
-     * const data = decoder.decode("$o§user$r§id$f§123$r§name$f§John$r§");
+     * const data = decoder.decode("$o~user$r~id$f~123$r~name$f~John$r~");
      * // Returns: { user: { id: '123', name: 'John' } }
      * ```
      */
@@ -50,22 +50,22 @@ export class LSFDecoder {
         const parts: string[] = [];
         let i = 0;
         while (i < lsfString.length) {
-            if (["$o§", "$f§", "$t§", "$v§"].includes(lsfString.slice(i, i + 3))) {
+            if (["$o~", "$f~", "$t~", "$v~"].includes(lsfString.slice(i, i + 3))) {
                 parts.push(lsfString.slice(i, i + 3));
                 i += 3;
-            } else if (lsfString.slice(i, i + 3) === "$r§") {
+            } else if (lsfString.slice(i, i + 3) === "$r~") {
                 parts.push(lsfString.slice(i, i + 3));
                 i += 3;
                 // Skip whitespace after record terminator
                 while (i < lsfString.length && /\s/.test(lsfString[i])) {
                     i++;
                 }
-            } else if (lsfString.slice(i, i + 3) === "$l§") {
+            } else if (lsfString.slice(i, i + 3) === "$l~") {
                 parts.push(lsfString.slice(i, i + 3));
                 i += 3;
             } else {
                 // Check for invalid tokens that might indicate malformed input
-                if (lsfString[i] === '$' && lsfString.slice(i, i + 3).match(/\$[a-z]\§/)) {
+                if (lsfString[i] === '$' && lsfString.slice(i, i + 3).match(/\$[a-z]\~/)) {
                     const invalidToken = lsfString.slice(i, i + 3);
                     const error = new Error(`Invalid token: ${invalidToken} at position ${i}`);
                     this.recordError(error, lsfString.slice(i, i + 10));
@@ -81,24 +81,24 @@ export class LSFDecoder {
         lsfString = parts.join('');
         
         // Split by record terminator and process each record
-        const records = lsfString.split('$r§');
+        const records = lsfString.split('$r~');
         
         for (const record of records) {
             if (!record.trim()) continue;
             
             try {
-                if (record.startsWith('$o§')) {
+                if (record.startsWith('$o~')) {
                     // New object
                     currentObj = record.slice(3);
                     result[currentObj] = {};
-                } else if (record.includes('$f§') && currentObj) {
-                    // Field (key$f§value) or (key$f§value$t§type)
-                    const [key, valueWithType] = record.split('$f§', 2);
+                } else if (record.includes('$f~') && currentObj) {
+                    // Field (key$f~value) or (key$f~value$t~type)
+                    const [key, valueWithType] = record.split('$f~', 2);
                     
                     if (valueWithType !== undefined) {
-                        // Handle typed values (key$f§value$t§type format)
-                        if (valueWithType.includes('$t§')) {
-                            const [value, typeCode] = valueWithType.split('$t§');
+                        // Handle typed values (key$f~value$t~type format)
+                        if (valueWithType.includes('$t~')) {
+                            const [value, typeCode] = valueWithType.split('$t~');
                             
                             if (this.options.autoConvertTypes) {
                                 result[currentObj][key] = this.convertTypedValue(typeCode as LSFTypeCode, value);
@@ -107,15 +107,15 @@ export class LSFDecoder {
                             }
                         }
                         // Handle lists
-                        else if (valueWithType.includes('$l§')) {
-                            result[currentObj][key] = valueWithType.split('$l§');
+                        else if (valueWithType.includes('$l~')) {
+                            result[currentObj][key] = valueWithType.split('$l~');
                         }
                         // Regular value
                         else {
                             result[currentObj][key] = valueWithType;
                         }
                     }
-                } else if (record.includes('$invalid') || record.match(/\$[a-z]\§/)) {
+                } else if (record.includes('$invalid') || record.match(/\$[a-z]\~/)) {
                     // Clearly malformed record, record an error
                     const error = new Error(`Malformed record: ${record}`);
                     this.recordError(error, record);
@@ -167,7 +167,7 @@ export class LSFDecoder {
                 return value;
             default:
                 const error = new Error(`Unknown type code: ${typeCode}`);
-                this.recordError(error, `$t§${typeCode}`);
+                this.recordError(error, `$t~${typeCode}`);
                 if (!this.options.continueOnError) {
                     throw error;
                 }

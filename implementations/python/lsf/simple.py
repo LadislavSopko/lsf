@@ -23,7 +23,7 @@ def to_lsf(data: Dict[str, Dict[str, Any]]) -> str:
         
     Example:
         >>> to_lsf({"user": {"id": 123, "name": "John", "tags": ["admin", "user"]}})
-        '$o§user$r§$f§id$f§123$r§$f§name$f§John$r§$f§tags$f§admin$l§user$r§'
+        '$o~user$r~$f~id$f~123$r~$f~name$f~John$r~$f~tags$f~admin$l~user$r~'
     """
     encoder = LSFEncoder()
     
@@ -60,7 +60,7 @@ def from_lsf(lsf_str: str) -> Dict[str, Dict[str, Any]]:
         Dictionary representing the parsed data
         
     Example:
-        >>> from_lsf('$o§user$r§$f§id$f§123$r§$f§name$f§John$r§')
+        >>> from_lsf('$o~user$r~$f~id$f~123$r~$f~name$f~John$r~')
         {'user': {'id': '123', 'name': 'John'}}
     """
     decoder = LSFDecoder()

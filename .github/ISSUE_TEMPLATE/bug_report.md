@@ -12,7 +12,7 @@ A clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
-1. Input LSF string: `$o§...`
+1. Input LSF string: `$o~...`
 2. Use function: `lsf_to_json()`
 3. Error or unexpected output: '...'
 

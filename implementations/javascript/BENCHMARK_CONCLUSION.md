@@ -5,7 +5,7 @@
 The LSF v1.3 format has been successfully implemented in TypeScript with all planned optimizations. The implementation includes:
 
 1. **Updated Format Structure**:
-   - Simplified field format from `$f§key$f§value$r§` to `key$f§value$r§`
+   - Simplified field format from `$f~key$f~value$r~` to `key$f~value$r~`
    - Single-letter type codes (n, f, b, d, s) instead of words
    - Removal of transaction markers and NULL value tokens
 

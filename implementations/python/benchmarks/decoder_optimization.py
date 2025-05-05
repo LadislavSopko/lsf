@@ -29,9 +29,9 @@ class OptimizedLSFDecoder(OriginalDecoder):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Pre-compile regex patterns
-        self._token_pattern = re.compile(r'\$([otefxv])§(.*?)(?=\$[otefxv]§|\Z)')
-        self._record_separator = re.compile(r'\$r§')
-        self._list_separator = re.compile(r'\$l§')
+        self._token_pattern = re.compile(r'\$([otefxv])~(.*?)(?=\$[otefxv]~|\Z)')
+        self._record_separator = re.compile(r'\$r~')
+        self._list_separator = re.compile(r'\$l~')
     
     def decode(self, lsf_string: str) -> Dict[str, Any]:
         """Decode an LSF string to a Python dictionary with optimizations."""
@@ -222,9 +222,9 @@ class RegexOptimizedDecoder(OriginalDecoder):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Pre-compile all regex patterns only once
-        self._token_pattern = re.compile(r'\$([otefxv])§(.*?)(?=\$[otefxv]§|\$r§|\Z)')
-        self._record_sep = re.compile(r'\$r§')
-        self._list_sep = re.compile(r'\$l§')
+        self._token_pattern = re.compile(r'\$([otefxv])~(.*?)(?=\$[otefxv]~|\$r~|\Z)')
+        self._record_sep = re.compile(r'\$r~')
+        self._list_sep = re.compile(r'\$l~')
     
     def decode(self, lsf_string: str) -> Dict[str, Any]:
         """Decode LSF string with optimized regex."""
@@ -264,13 +264,13 @@ class LookupTableDecoder(OriginalDecoder):
         if self._current_object is None:
             return
         
-        parts = token_value.split('$f§', 1)
+        parts = token_value.split('$f~', 1)
         if len(parts) == 2:
             key, value = parts
             
             # Handle list values
-            if '$l§' in value:
-                result[self._current_object][key] = value.split('$l§')
+            if '$l~' in value:
+                result[self._current_object][key] = value.split('$l~')
             else:
                 result[self._current_object][key] = value
     
@@ -279,7 +279,7 @@ class LookupTableDecoder(OriginalDecoder):
         if self._current_object is None:
             return
         
-        parts = token_value.split('$f§', 2)
+        parts = token_value.split('$f~', 2)
         if len(parts) == 3:
             type_hint, key, value = parts
             

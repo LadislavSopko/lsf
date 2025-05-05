@@ -82,7 +82,7 @@ export class LSFSimple {
      * @example
      * ```ts
      * const lsf = new LSFSimple();
-     * const data = lsf.decode("$o§user$r§id$f§123$t§n$r§name$f§John$r§");
+     * const data = lsf.decode("$o~user$r~id$f~123$t~n$r~name$f~John$r~");
      * ```
      */
     public decode(lsfString: string): LSFDocument {

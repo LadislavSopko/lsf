@@ -25,7 +25,7 @@ export class LSFEncoder {
         };
         
         if (this.options.includeVersion) {
-            this.buffer.push(`$v§${VERSION}$r§`);
+            this.buffer.push(`$v~${VERSION}$r~`);
         }
     }
     
@@ -36,7 +36,7 @@ export class LSFEncoder {
      * @returns this for chaining
      */
     public startObject(name: string): LSFEncoder {
-        this.buffer.push(`$o§${name}$r§`);
+        this.buffer.push(`$o~${name}$r~`);
         this.currentObject = name;
         return this;
     }
@@ -59,7 +59,7 @@ export class LSFEncoder {
             return this.addTypedFieldWithAutoType(key, value);
         }
         
-        this.buffer.push(`${key}$f§${String(value)}$r§`);
+        this.buffer.push(`${key}$f~${String(value)}$r~`);
         return this;
     }
     
@@ -86,7 +86,7 @@ export class LSFEncoder {
             case 'null': return this; // Skip null fields
             case 'bin': 
                 if (value instanceof Buffer || value instanceof Uint8Array) {
-                    this.buffer.push(`${key}$f§${value.toString('base64')}$r§`);
+                    this.buffer.push(`${key}$f~${value.toString('base64')}$r~`);
                     return this;
                 }
                 throw new Error('Value must be Buffer or Uint8Array for binary fields');
@@ -113,7 +113,7 @@ export class LSFEncoder {
             processedValue = String(value);
         }
         
-        this.buffer.push(`${key}$f§${processedValue}$t§${typeCodeV1_3}$r§`);
+        this.buffer.push(`${key}$f~${processedValue}$t~${typeCodeV1_3}$r~`);
         return this;
     }
     
@@ -132,10 +132,10 @@ export class LSFEncoder {
         
         if (!values || values.length === 0) {
             // Empty list
-            this.buffer.push(`${key}$f§$r§`);
+            this.buffer.push(`${key}$f~$r~`);
         } else {
-            const items = values.map(v => String(v)).join('$l§');
-            this.buffer.push(`${key}$f§${items}$r§`);
+            const items = values.map(v => String(v)).join('$l~');
+            this.buffer.push(`${key}$f~${items}$r~`);
         }
         
         return this;
@@ -169,7 +169,7 @@ export class LSFEncoder {
             return this.addTypedField(key, value, 'd');
         } else if (value instanceof Buffer || value instanceof Uint8Array) {
             // Binary data is stored as base64 strings with no special type code
-            this.buffer.push(`${key}$f§${value.toString('base64')}$r§`);
+            this.buffer.push(`${key}$f~${value.toString('base64')}$r~`);
             return this;
         } else if (Array.isArray(value)) {
             return this.addList(key, value);

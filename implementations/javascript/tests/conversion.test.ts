@@ -3,7 +3,7 @@ import { lsfToJson } from '../src/conversion';
 
 describe('LSF Conversion', () => {
   it('should convert basic LSF to JSON', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§age$f§30$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~age$f~30$r~';
     
     // Convert to JSON
     const jsonStr = lsfToJson(lsfStr);
@@ -15,7 +15,7 @@ describe('LSF Conversion', () => {
   });
   
   it('should convert LSF to pretty-printed JSON', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§age$f§30$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~age$f~30$r~';
     
     // Convert to JSON with pretty print (2 spaces)
     const jsonStr = lsfToJson(lsfStr, 2);
@@ -30,7 +30,7 @@ describe('LSF Conversion', () => {
   });
   
   it('should convert LSF to JSON with custom spacing', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§age$f§30$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~age$f~30$r~';
     
     // Convert to JSON with 4 spaces
     const jsonStr = lsfToJson(lsfStr, 4);
@@ -44,7 +44,7 @@ describe('LSF Conversion', () => {
   });
   
   it('should handle a replacer function', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§password$f§secret$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~password$f~secret$r~';
     
     // Use a replacer to filter out password fields
     const replacer = (key: string, value: any) => {
@@ -60,11 +60,11 @@ describe('LSF Conversion', () => {
   });
   
   it('should handle typed values correctly', () => {
-    const lsfStr = `$o§data$r§
-      int_val$f§42$t§n$r§
-      float_val$f§3.14$t§f$r§
-      bool_val$f§true$t§b$r§
-      date_val$f§2023-01-01T12:00:00Z$t§d$r§
+    const lsfStr = `$o~data$r~
+      int_val$f~42$t~n$r~
+      float_val$f~3.14$t~f$r~
+      bool_val$f~true$t~b$r~
+      date_val$f~2023-01-01T12:00:00Z$t~d$r~
     `;
     
     const jsonStr = lsfToJson(lsfStr);
@@ -80,7 +80,7 @@ describe('LSF Conversion', () => {
   });
   
   it('should handle list values', () => {
-    const lsfStr = '$o§user$r§tags$f§admin$l§user$l§editor$r§';
+    const lsfStr = '$o~user$r~tags$f~admin$l~user$l~editor$r~';
     
     const jsonStr = lsfToJson(lsfStr);
     const data = JSON.parse(jsonStr);
@@ -89,7 +89,7 @@ describe('LSF Conversion', () => {
   });
   
   it('should handle multiple objects', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§$o§product$r§name$f§Laptop$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~$o~product$r~name$f~Laptop$r~';
     
     const jsonStr = lsfToJson(lsfStr);
     const data = JSON.parse(jsonStr);
@@ -99,7 +99,7 @@ describe('LSF Conversion', () => {
   });
   
   it('should handle string spacing parameter', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§age$f§30$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~age$f~30$r~';
     
     // Convert with tab indentation
     const jsonStr = lsfToJson(lsfStr, '\t');

@@ -13,9 +13,9 @@ describe('LSFSimple', () => {
     };
     const result = lsf.encode(data);
     
-    expect(result).toContain('$o§user$r§');
-    expect(result).toContain('name$f§John$r§');
-    expect(result).toContain('age$f§30$t§n$r§');
+    expect(result).toContain('$o~user$r~');
+    expect(result).toContain('name$f~John$r~');
+    expect(result).toContain('age$f~30$t~n$r~');
   });
   
   it('should encode with no auto type detection', () => {
@@ -28,9 +28,9 @@ describe('LSFSimple', () => {
     };
     const result = lsf.encode(data);
     
-    expect(result).toContain('$o§user$r§');
-    expect(result).toContain('name$f§John$r§');
-    expect(result).toContain('age$f§30$r§'); // No type hint
+    expect(result).toContain('$o~user$r~');
+    expect(result).toContain('name$f~John$r~');
+    expect(result).toContain('age$f~30$r~'); // No type hint
   });
   
   it('should encode multiple objects', () => {
@@ -46,11 +46,11 @@ describe('LSFSimple', () => {
     };
     const result = lsf.encode(data);
     
-    expect(result).toContain('$o§user$r§');
-    expect(result).toContain('$o§product$r§');
-    expect(result).toContain('name$f§John$r§');
-    expect(result).toContain('name$f§Laptop$r§');
-    expect(result).toContain('price$f§999.99$t§f$r§');
+    expect(result).toContain('$o~user$r~');
+    expect(result).toContain('$o~product$r~');
+    expect(result).toContain('name$f~John$r~');
+    expect(result).toContain('name$f~Laptop$r~');
+    expect(result).toContain('price$f~999.99$t~f$r~');
   });
   
   it('should encode a list', () => {
@@ -63,7 +63,7 @@ describe('LSFSimple', () => {
     };
     const result = lsf.encode(data);
     
-    expect(result).toContain('tags$f§admin$l§user$r§');
+    expect(result).toContain('tags$f~admin$l~user$r~');
   });
   
   it('should encode different value types', () => {
@@ -78,9 +78,9 @@ describe('LSFSimple', () => {
     };
     const result = lsf.encode(data);
     
-    expect(result).toContain('int_val$f§42$t§n$r§');
-    expect(result).toContain('float_val$f§3.14$t§f$r§');
-    expect(result).toContain('bool_val$f§true$t§b$r§');
+    expect(result).toContain('int_val$f~42$t~n$r~');
+    expect(result).toContain('float_val$f~3.14$t~f$r~');
+    expect(result).toContain('bool_val$f~true$t~b$r~');
     // Null values are omitted in v1.3
     expect(result).not.toContain('null_val');
   });
@@ -95,12 +95,12 @@ describe('LSFSimple', () => {
     const result = lsf.encode(data);
     
     const b64 = Buffer.from('hello world').toString('base64');
-    expect(result).toContain(`content$f§${b64}$r§`);
+    expect(result).toContain(`content$f~${b64}$r~`);
   });
   
   it('should decode a basic LSF string', () => {
     const lsf = new LSFSimple({ autoConvertTypes: true });
-    const lsfStr = '$o§user$r§name$f§John$r§age$f§30$t§n$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~age$f~30$t~n$r~';
     const result = lsf.decode(lsfStr);
     
     expect(result).toEqual({
@@ -113,7 +113,7 @@ describe('LSFSimple', () => {
   
   it('should decode multiple objects', () => {
     const lsf = new LSFSimple({ autoConvertTypes: true });
-    const lsfStr = '$o§user$r§name$f§John$r§$o§product$r§name$f§Laptop$r§price$f§999.99$t§f$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~$o~product$r~name$f~Laptop$r~price$f~999.99$t~f$r~';
     const result = lsf.decode(lsfStr);
     
     expect(result).toEqual({
@@ -129,7 +129,7 @@ describe('LSFSimple', () => {
   
   it('should decode a list', () => {
     const lsf = new LSFSimple();
-    const lsfStr = '$o§user$r§name$f§John$r§tags$f§admin$l§user$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~tags$f~admin$l~user$r~';
     const result = lsf.decode(lsfStr);
     
     expect(result).toEqual({
@@ -190,12 +190,12 @@ describe('LSFSimple', () => {
     const result = lsf.encode(data);
     
     // With explicitTypes:true, even strings get type markers
-    expect(result).toContain('name$f§John$t§s$r§');
+    expect(result).toContain('name$f~John$t~s$r~');
   });
   
   it('should allow configuring parse options', () => {
     const lsf = new LSFSimple({ autoConvertTypes: false });
-    const lsfStr = '$o§user$r§age$f§30$t§n$r§';
+    const lsfStr = '$o~user$r~age$f~30$t~n$r~';
     const result = lsf.decode(lsfStr);
     
     // With autoConvertTypes:false, types are preserved as strings

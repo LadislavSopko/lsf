@@ -17,12 +17,12 @@ interface LSFInternalDocument {
  * Using string values directly for better readability and flexibility
  */
 const enum Token {
-  ObjectStart = "$o§",
-  FieldSep = "$f§",
-  RecordEnd = "$r§",
-  ListSep = "$l§",
-  TypeSep = "$t§",
-  VersionMarker = "$v§"
+  ObjectStart = "$o~",
+  FieldSep = "$f~",
+  RecordEnd = "$r~",
+  ListSep = "$l~",
+  TypeSep = "$t~",
+  VersionMarker = "$v~"
 }
 
 /**

@@ -5,7 +5,7 @@ import { UltraFastLSFParser } from '../src/fast-parser';
 describe('HyperFastLSFParser', () => {
   // Basic functionality tests
   it('should parse a basic object', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~';
     const parser = new HyperFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -17,7 +17,7 @@ describe('HyperFastLSFParser', () => {
   });
   
   it('should parse multiple fields', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§age$f§30$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~age$f~30$r~';
     const parser = new HyperFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -30,7 +30,7 @@ describe('HyperFastLSFParser', () => {
   });
   
   it('should parse multiple objects', () => {
-    const lsfStr = '$o§user$r§name$f§John$r§$o§product$r§name$f§Laptop$r§';
+    const lsfStr = '$o~user$r~name$f~John$r~$o~product$r~name$f~Laptop$r~';
     const parser = new HyperFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -45,7 +45,7 @@ describe('HyperFastLSFParser', () => {
   });
   
   it('should parse a list', () => {
-    const lsfStr = '$o§user$r§tags$f§admin$l§user$l§editor$r§';
+    const lsfStr = '$o~user$r~tags$f~admin$l~user$l~editor$r~';
     const parser = new HyperFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -57,7 +57,7 @@ describe('HyperFastLSFParser', () => {
   });
   
   it('should parse typed values', () => {
-    const lsfStr = '$o§data$r§int$f§42$t§n$r§float$f§3.14$t§f$r§bool$f§true$t§b$r§';
+    const lsfStr = '$o~data$r~int$f~42$t~n$r~float$f~3.14$t~f$r~bool$f~true$t~b$r~';
     const parser = new HyperFastLSFParser(lsfStr);
     const result = parser.parse();
     
@@ -241,21 +241,21 @@ function generateLSF(data: Record<string, any>): string {
   let lsf = '';
   
   for (const [objName, objValue] of Object.entries(data)) {
-    lsf += `$o§${objName}$r§`;
+    lsf += `$o~${objName}$r~`;
     
     for (const [key, value] of Object.entries(objValue)) {
       if (Array.isArray(value)) {
-        lsf += `${key}$f§${value.join('$l§')}$r§`;
+        lsf += `${key}$f~${value.join('$l~')}$r~`;
       } else if (typeof value === 'number' && Number.isInteger(value)) {
-        lsf += `${key}$f§${value}$t§n$r§`;
+        lsf += `${key}$f~${value}$t~n$r~`;
       } else if (typeof value === 'number') {
-        lsf += `${key}$f§${value}$t§f$r§`;
+        lsf += `${key}$f~${value}$t~f$r~`;
       } else if (typeof value === 'boolean') {
-        lsf += `${key}$f§${value}$t§b$r§`;
+        lsf += `${key}$f~${value}$t~b$r~`;
       } else if (value instanceof Date) {
-        lsf += `${key}$f§${value.toISOString()}$t§d$r§`;
+        lsf += `${key}$f~${value.toISOString()}$t~d$r~`;
       } else {
-        lsf += `${key}$f§${value}$r§`;
+        lsf += `${key}$f~${value}$r~`;
       }
     }
   }

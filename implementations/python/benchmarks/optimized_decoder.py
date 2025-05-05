@@ -28,8 +28,8 @@ class FastLSFDecoder(OriginalDecoder):
         super().__init__(*args, **kwargs)
         
         # Pre-compile regex patterns
-        self._token_pattern = re.compile(r'\$([otefxv])§(.*?)(?=\$[otefxv]§|\$r§|\Z)')
-        self._field_pattern = re.compile(r'\$f§(.*?)(?=\$f§|\$r§|\Z)')
+        self._token_pattern = re.compile(r'\$([otefxv])~(.*?)(?=\$[otefxv]~|\$r~|\Z)')
+        self._field_pattern = re.compile(r'\$f~(.*?)(?=\$f~|\$r~|\Z)')
         
         # Token type constants
         self._TOKEN_OBJECT = 'o'
@@ -40,8 +40,8 @@ class FastLSFDecoder(OriginalDecoder):
         self._TOKEN_VERSION = 'v'
         
         # Static token markers
-        self._RECORD_SEP = '$r§'
-        self._LIST_SEP = '$l§'
+        self._RECORD_SEP = '$r~'
+        self._LIST_SEP = '$l~'
         
         # Type conversion lookup table
         self._type_converters = {
@@ -102,7 +102,7 @@ class FastLSFDecoder(OriginalDecoder):
                 break
             
             # Check what type of token it is
-            if next_marker + 2 < length and lsf_string[next_marker + 2] == '§':
+            if next_marker + 2 < length and lsf_string[next_marker + 2] == '~':
                 token_type = lsf_string[next_marker + 1]
                 
                 # Find the end of this token (next record separator)
@@ -125,7 +125,7 @@ class FastLSFDecoder(OriginalDecoder):
                     # Fast path for field processing
                     if self._current_object is not None:
                         # Split the field by the field separator
-                        field_parts = token_data.split('$f§', 1)
+                        field_parts = token_data.split('$f~', 1)
                         if len(field_parts) == 2:
                             key, value = field_parts
                             
@@ -140,7 +140,7 @@ class FastLSFDecoder(OriginalDecoder):
                     self._token_handlers[token_type](token_data, result)
                 
                 # Move position past this token
-                position = end_pos + 3  # +3 for '$r§'
+                position = end_pos + 3  # +3 for '$r~'
             else:
                 # Invalid token, skip it
                 position = next_marker + 1
@@ -153,7 +153,7 @@ class FastLSFDecoder(OriginalDecoder):
             return
         
         # Split by field separator - more efficient than regex for simple splits
-        parts = token_data.split('$f§', 2)
+        parts = token_data.split('$f~', 2)
         if len(parts) == 3:
             type_hint, key, value = parts
             
@@ -181,14 +181,14 @@ class NonRegexDecoder(OriginalDecoder):
         super().__init__(*args, **kwargs)
         
         # Token markers
-        self._OBJECT_MARKER = '$o§'
-        self._FIELD_MARKER = '$f§'
-        self._TYPED_FIELD_MARKER = '$t§'
-        self._ERROR_MARKER = '$e§'
-        self._TRANSACTION_MARKER = '$x§'
-        self._VERSION_MARKER = '$v§'
-        self._RECORD_SEP = '$r§'
-        self._LIST_SEP = '$l§'
+        self._OBJECT_MARKER = '$o~'
+        self._FIELD_MARKER = '$f~'
+        self._TYPED_FIELD_MARKER = '$t~'
+        self._ERROR_MARKER = '$e~'
+        self._TRANSACTION_MARKER = '$x~'
+        self._VERSION_MARKER = '$v~'
+        self._RECORD_SEP = '$r~'
+        self._LIST_SEP = '$l~'
         
         # Type conversion functions
         self._type_converters = {
@@ -290,7 +290,7 @@ class StreamingDecoder(OriginalDecoder):
         
         while i < length:
             # Look for token markers
-            if lsf_string[i] == '$' and i + 2 < length and lsf_string[i+2] == '§':
+            if lsf_string[i] == '$' and i + 2 < length and lsf_string[i+2] == '~':
                 # Found a token marker
                 token_type = lsf_string[i+1]
                 i += 3  # Skip the marker
@@ -298,7 +298,7 @@ class StreamingDecoder(OriginalDecoder):
                 # Extract token data until record separator or end
                 start = i
                 while i < length:
-                    if i + 2 < length and lsf_string[i:i+3] == '$r§':
+                    if i + 2 < length and lsf_string[i:i+3] == '$r~':
                         break
                     i += 1
                 
@@ -334,27 +334,27 @@ class StreamingDecoder(OriginalDecoder):
     def _process_field(self, token_data: str, result: Dict[str, Any]) -> None:
         """Process a field token efficiently."""
         # Find field separator
-        sep_index = token_data.find('$f§')
+        sep_index = token_data.find('$f~')
         if sep_index != -1:
             key = token_data[:sep_index]
             value = token_data[sep_index+3:]
             
             # Handle list values
-            if '$l§' in value:
-                result[self._current_object][key] = value.split('$l§')
+            if '$l~' in value:
+                result[self._current_object][key] = value.split('$l~')
             else:
                 result[self._current_object][key] = value
     
     def _process_typed_field(self, token_data: str, result: Dict[str, Any]) -> None:
         """Process a typed field token efficiently."""
         # Extract type hint
-        sep_index = token_data.find('$f§')
+        sep_index = token_data.find('$f~')
         if sep_index != -1:
             type_hint = token_data[:sep_index]
             remainder = token_data[sep_index+3:]
             
             # Extract key and value
-            sep_index2 = remainder.find('$f§')
+            sep_index2 = remainder.find('$f~')
             if sep_index2 != -1:
                 key = remainder[:sep_index2]
                 value = remainder[sep_index2+3:]

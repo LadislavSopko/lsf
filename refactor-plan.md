@@ -11,8 +11,8 @@ This plan outlines the steps to implement LSF v1.3 format optimizations and perf
 ## Phase 1: Update Specification
 
 - [x] Update SPECIFICATION.md with v1.3 format changes
-  - [x] Document new grammar with simplified field format: `key$f§value[$t§type]$r§`
-  - [x] Update token table to remove `$f§` field prefix
+  - [x] Document new grammar with simplified field format: `key$f~value[$t~type]$r~`
+  - [x] Update token table to remove `$f~` field prefix
   - [x] Document new type system with 1-letter codes (`n`, `f`, `b`, `d`)
   - [x] Update examples to show new format
   - [x] Update prompt templates for v1.3
@@ -20,8 +20,8 @@ This plan outlines the steps to implement LSF v1.3 format optimizations and perf
   - [x] Revise usage examples throughout document
 - [x] Fix specification issues
   - [x] Remove error handling references
-  - [x] Remove NULL value token (`$NL§`)
-  - [x] Remove transaction markers (`$x§`)
+  - [x] Remove NULL value token (`$NL~`)
+  - [x] Remove transaction markers (`$x~`)
   - [x] Fix type system (binary, null, string handling)
   - [x] Simplify grammar
   - [x] Replace code examples with references to official implementations

@@ -16,13 +16,13 @@ class LSFEncoderTests(TestCase):
         """Test the start_object method."""
         encoder = LSFEncoder()
         result = encoder.start_object("user").to_string()
-        self.assertEqual(result, "$o§user$r§")
+        self.assertEqual(result, "$o~user$r~")
 
     def test_add_field(self):
         """Test the add_field method."""
         encoder = LSFEncoder()
         result = encoder.start_object("user").add_field("name", "John").to_string()
-        self.assertEqual(result, "$o§user$r§$f§name$f§John$r§")
+        self.assertEqual(result, "$o~user$r~$f~name$f~John$r~")
 
     def test_add_multiple_fields(self):
         """Test adding multiple fields."""
@@ -32,7 +32,7 @@ class LSFEncoderTests(TestCase):
                   .add_field("name", "John")
                   .add_field("age", 30)
                   .to_string())
-        self.assertEqual(result, "$o§user$r§$f§name$f§John$r§$f§age$f§30$r§")
+        self.assertEqual(result, "$o~user$r~$f~name$f~John$r~$f~age$f~30$r~")
 
     def test_add_field_without_object(self):
         """Test adding a field without starting an object first."""
@@ -47,7 +47,7 @@ class LSFEncoderTests(TestCase):
                   .start_object("user")
                   .add_typed_field("age", 30, "int")
                   .to_string())
-        self.assertEqual(result, "$o§user$r§$t§int$f§age$f§30$r§")
+        self.assertEqual(result, "$o~user$r~$t~int$f~age$f~30$r~")
 
     def test_add_typed_field_float(self):
         """Test adding a typed field with float type."""
@@ -56,7 +56,7 @@ class LSFEncoderTests(TestCase):
                   .start_object("product")
                   .add_typed_field("price", 19.99, "float")
                   .to_string())
-        self.assertEqual(result, "$o§product$r§$t§float$f§price$f§19.99$r§")
+        self.assertEqual(result, "$o~product$r~$t~float$f~price$f~19.99$r~")
 
     def test_add_typed_field_bool(self):
         """Test adding a typed field with bool type."""
@@ -65,7 +65,7 @@ class LSFEncoderTests(TestCase):
                   .start_object("user")
                   .add_typed_field("active", True, "bool")
                   .to_string())
-        self.assertEqual(result, "$o§user$r§$t§bool$f§active$f§True$r§")
+        self.assertEqual(result, "$o~user$r~$t~bool$f~active$f~True$r~")
 
     def test_add_typed_field_null(self):
         """Test adding a typed field with null type."""
@@ -74,7 +74,7 @@ class LSFEncoderTests(TestCase):
                   .start_object("user")
                   .add_typed_field("metadata", None, "null")
                   .to_string())
-        self.assertEqual(result, "$o§user$r§$t§null$f§metadata$f§$r§")
+        self.assertEqual(result, "$o~user$r~$t~null$f~metadata$f~$r~")
 
     def test_add_typed_field_bin(self):
         """Test adding a typed field with bin type."""
@@ -85,7 +85,7 @@ class LSFEncoderTests(TestCase):
                   .start_object("file")
                   .add_typed_field("content", binary_data, "bin")
                   .to_string())
-        self.assertEqual(result, f"$o§file$r§$t§bin$f§content$f§{expected_b64}$r§")
+        self.assertEqual(result, f"$o~file$r~$t~bin$f~content$f~{expected_b64}$r~")
 
     def test_add_typed_field_invalid_type(self):
         """Test adding a typed field with an invalid type."""
@@ -101,7 +101,7 @@ class LSFEncoderTests(TestCase):
                   .start_object("user")
                   .add_list("tags", ["admin", "user"])
                   .to_string())
-        self.assertEqual(result, "$o§user$r§$f§tags$f§admin$l§user$r§")
+        self.assertEqual(result, "$o~user$r~$f~tags$f~admin$l~user$r~")
 
     def test_add_empty_list(self):
         """Test adding an empty list field."""
@@ -110,7 +110,7 @@ class LSFEncoderTests(TestCase):
                   .start_object("user")
                   .add_list("tags", [])
                   .to_string())
-        self.assertEqual(result, "$o§user$r§$f§tags$f§$r§")
+        self.assertEqual(result, "$o~user$r~$f~tags$f~$r~")
 
     def test_add_error(self):
         """Test adding an error marker."""
@@ -119,7 +119,7 @@ class LSFEncoderTests(TestCase):
                   .start_object("user")
                   .add_error("Something went wrong")
                   .to_string())
-        self.assertEqual(result, "$o§user$r§$e§Something went wrong$r§")
+        self.assertEqual(result, "$o~user$r~$e~Something went wrong$r~")
 
     def test_end_transaction(self):
         """Test ending a transaction."""
@@ -129,7 +129,7 @@ class LSFEncoderTests(TestCase):
                   .add_field("name", "John")
                   .end_transaction()
                   .to_string())
-        self.assertEqual(result, "$o§user$r§$f§name$f§John$r§$x§$r§")
+        self.assertEqual(result, "$o~user$r~$f~name$f~John$r~$x~$r~")
 
     def test_complex_encoding(self):
         """Test a more complex encoding scenario."""
@@ -147,15 +147,15 @@ class LSFEncoderTests(TestCase):
                   .to_string())
         
         expected = (
-            "$o§user$r§"
-            "$f§id$f§123$r§"
-            "$f§name$f§John Doe$r§"
-            "$f§tags$f§admin$l§user$l§editor$r§"
-            "$t§bool$f§active$f§True$r§"
-            "$o§profile$r§"
-            "$f§bio$f§A software developer$r§"
-            "$f§skills$f§Python$l§JavaScript$l§TypeScript$r§"
-            "$x§$r§"
+            "$o~user$r~"
+            "$f~id$f~123$r~"
+            "$f~name$f~John Doe$r~"
+            "$f~tags$f~admin$l~user$l~editor$r~"
+            "$t~bool$f~active$f~True$r~"
+            "$o~profile$r~"
+            "$f~bio$f~A software developer$r~"
+            "$f~skills$f~Python$l~JavaScript$l~TypeScript$r~"
+            "$x~$r~"
         )
         self.assertEqual(result, expected)
 

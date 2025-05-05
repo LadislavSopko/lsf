@@ -10,7 +10,7 @@ import { LSFDocument } from './types';
 // Character code constants for faster comparisons
 const CHAR_CODE = {
   DOLLAR: 36,    // $
-  SECTION: 167,  // §
+  SECTION: 126,  // ~
   O: 111,        // o 
   F: 102,        // f
   R: 114,        // r
@@ -67,11 +67,11 @@ export class HyperFastLSFParser {
         
         switch (tokenChar) {
           case CHAR_CODE.O: {
-            // Object start: $o§
+            // Object start: $o~
             pos += 3; // Skip token
             const objectNameStart = pos;
             
-            // Find end of object name (until $r§)
+            // Find end of object name (until $r~)
             while (
               pos < this.inputLength && 
               !(this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
@@ -86,13 +86,13 @@ export class HyperFastLSFParser {
             currentObject = this.input.substring(objectNameStart, pos);
             this.result[currentObject] = {};
             
-            // Skip the $r§ token
+            // Skip the $r~ token
             pos += 3;
             break;
           }
           
           case CHAR_CODE.F: {
-            // Field separator: $f§
+            // Field separator: $f~
             pos += 3; // Skip token
             
             // Start collecting field value
@@ -100,7 +100,7 @@ export class HyperFastLSFParser {
             let value: string | string[] = '';
             let hasListSeparator = false;
             
-            // Extract value until next token ($r§, $t§, or $l§)
+            // Extract value until next token ($r~, $t~, or $l~)
             while (
               pos < this.inputLength && 
               !(this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
@@ -123,7 +123,7 @@ export class HyperFastLSFParser {
               const nextTokenChar = this.input.charCodeAt(pos + 1);
               
               if (nextTokenChar === CHAR_CODE.L) {
-                // List separator: $l§
+                // List separator: $l~
                 let listValues = [value];
                 pos += 3; // Skip token
                 
@@ -158,13 +158,13 @@ export class HyperFastLSFParser {
                       pos + 2 < this.inputLength && 
                       this.input.charCodeAt(pos + 1) === CHAR_CODE.L && 
                       this.input.charCodeAt(pos + 2) === CHAR_CODE.SECTION) {
-                    pos += 3; // Skip the $l§ and continue
+                    pos += 3; // Skip the $l~ and continue
                   }
                 }
                 
                 value = listValues;
               } else if (nextTokenChar === CHAR_CODE.T) {
-                // Type marker: $t§
+                // Type marker: $t~
                 pos += 3; // Skip token
                 const typeStart = pos;
                 
@@ -184,7 +184,7 @@ export class HyperFastLSFParser {
                 value = this.convertTypedValue(value, typeCode);
               }
               
-              // Skip the $r§ token
+              // Skip the $r~ token
               if (pos < this.inputLength && 
                   this.input.charCodeAt(pos) === CHAR_CODE.DOLLAR && 
                   pos + 2 < this.inputLength && 
@@ -204,13 +204,13 @@ export class HyperFastLSFParser {
           }
           
           case CHAR_CODE.R: {
-            // Record end: $r§
+            // Record end: $r~
             pos += 3; // Skip token
             break;
           }
           
           case CHAR_CODE.V: {
-            // Version marker: $v§ - skip until next $r§
+            // Version marker: $v~ - skip until next $r~
             pos += 3; // Skip token
             
             while (
@@ -223,7 +223,7 @@ export class HyperFastLSFParser {
               pos++;
             }
             
-            // Skip the $r§ token
+            // Skip the $r~ token
             if (pos < this.inputLength) {
               pos += 3;
             }
