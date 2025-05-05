@@ -103,25 +103,21 @@ namespace Zerox.LSF.Tests
         }
 
         [Fact]
-        public void ToJsonString_LsfStartingWithField_ReturnsCorrectJson()
+        public void ToJsonString_LsfStartingWithField_ReturnsNull()
         {
-            // DOMBuilder creates an implicit root object.
-            // Visitor should convert this structure.
+            // Visitor should now return null because root token position is not 0
             string lsf = "$f~field$v~value";
-            string expectedJson = "{\"field\":\"value\"}"; // Implicit object has no name
             string? actualJson = ConvertLsfToJson(lsf);
-            Assert.Equal(NormalizeJson(expectedJson), NormalizeJson(actualJson)); 
+            Assert.Null(actualJson); 
         }
 
         [Fact]
-        public void ToJsonString_LsfStartingWithValue_ReturnsCorrectJson()
+        public void ToJsonString_LsfStartingWithValue_ReturnsNull()
         {
-             // DOMBuilder creates an implicit root object and implicit field.
-             // Visitor should convert this structure.
+             // Visitor should now return null because root token position is not 0
             string lsf = "$v~value";
-            string expectedJson = "{\"\":\"value\"}"; // Implicit field has empty name
             string? actualJson = ConvertLsfToJson(lsf);
-            Assert.Equal(NormalizeJson(expectedJson), NormalizeJson(actualJson));
+            Assert.Null(actualJson);
         }
 
         [Fact]

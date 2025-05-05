@@ -39,15 +39,16 @@ namespace Zerox.LSF
             }
 
             // As per LSF spec, only one root object is strictly valid.
-            // We process the first root found.
+            // We process the first root found, but also verify it was the *first* token.
             int rootIndex = rootIndices[0];
             var rootNode = navigator.GetNode(rootIndex);
 
-            // Check if the root is an Object. Accept implicit roots built by DOMBuilder.
-            if (rootNode.Type != TokenType.Object)
+            // Check if the root is an Object AND if it was the first token (TokenPosition == 0)
+            if (rootNode.Type != TokenType.Object || rootNode.TokenPosition != 0)
             {
-                // Handle cases where the root isn't an object (shouldn't happen if builder guarantees root object?).
-                // Return null indicating unexpected structure.
+                // If the root node is not an Object, OR if it's an object but wasn't 
+                // the first token (implying an implicit root was created due to 
+                // the LSF starting with $f~ or $v~), return null.
                 return null; 
             }
 
