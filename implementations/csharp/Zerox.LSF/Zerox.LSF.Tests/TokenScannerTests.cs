@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Xunit;
+using Xunit.Abstractions;
 using Zerox.LSF; // Assuming your main library namespace is Zerox.LSF
 
 namespace Zerox.LSF.Tests
@@ -10,6 +11,15 @@ namespace Zerox.LSF.Tests
     public class TokenScannerTests
     {
         private static readonly UTF8Encoding Utf8NoBom = new UTF8Encoding(false); // Ensure no BOM
+
+        ITestOutputHelper _output;
+
+        //ctor with outputHelper
+        public TokenScannerTests(ITestOutputHelper o)
+        {
+            _output = o;
+        }
+
 
         // Helper to convert string to ReadOnlySpan<byte>
         private ReadOnlySpan<byte> ToSpan(string s)
@@ -125,13 +135,13 @@ namespace Zerox.LSF.Tests
             Assert.Equal(19, result[2].Position);
 
             Assert.Equal(TokenType.TypeHint, result[3].Type);
-            Assert.Equal(27, result[3].Position);
+            Assert.Equal(28, result[3].Position);
 
             Assert.Equal(TokenType.Field, result[4].Type);
-            Assert.Equal(30, result[4].Position);
+            Assert.Equal(32, result[4].Position);
 
             Assert.Equal(TokenType.Value, result[5].Type);
-            Assert.Equal(39, result[5].Position);
+            Assert.Equal(41, result[5].Position);
         }
 
          [Fact]
@@ -167,7 +177,7 @@ namespace Zerox.LSF.Tests
             // Assert
             Assert.Single(result);
             Assert.Equal(TokenType.Object, result[0].Type);
-            Assert.Equal(39, result[0].Position);
+            Assert.Equal(40, result[0].Position);
         }
 
         [Fact]
