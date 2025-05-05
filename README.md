@@ -2,79 +2,78 @@
 
 A structured, flat serialization format designed specifically for maximum reliability when used with Large Language Models (LLMs).
 
-![LSF Version](https://img.shields.io/badge/LSF-v1.2-blue.svg)
+![LSF Version](https://img.shields.io/badge/LSF-v3.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
 ## 🚀 Quick Start
 
 ```bash
-# Install Python implementation
-pip install lsf-format
+# Install JavaScript/TypeScript implementation
+npm install lsf-parser
 
-# Install JavaScript implementation
-npm install lsf-format
-```
-
-```python
-# Python usage
-from lsf import LSFEncoder, LSFDecoder
-
-encoder = LSFEncoder()
-lsf_output = (encoder
-    .start_object("user")
-    .add_field("id", 123)
-    .add_field("name", "John")
-    .to_string())
-
-decoder = LSFDecoder()
-data = decoder.decode(lsf_output)
+# C# Package (Example - Replace when published)
+dotnet add package Zerox.LSF
 ```
 
 ```javascript
-// JavaScript usage
-import { LSFSimple } from 'lsf-format';
+// JavaScript/TypeScript Usage (Example - Verify Package API)
+import { LSFParser } from 'lsf-parser';
 
-const lsf = new LSFSimple();
-const encoded = lsf.encode({ user: { id: 123, name: "John" } });
-const decoded = lsf.decode(encoded);
+const lsfInput = '$o~user$f~id$v~123$t~n$f~name$v~Alice';
+const jsonData = LSFParser.parseToJsonString(lsfInput);
+console.log(jsonData);
+
+const dataToEncode = { id: 456, name: 'Bob', active: true };
+const lsfString = LSFParser.encodeToString(dataToEncode, 'user');
+console.log(lsfString);
+```
+
+```csharp
+// C# Usage
+using Zerox.LSF;
+using System.Collections.Generic;
+
+// Parsing
+string lsfInput = "$o~user$f~id$v~123$t~n$f~name$v~Alice";
+string? jsonOutput = LSFParser.ParseToJsonString(lsfInput);
+Console.WriteLine(jsonOutput);
+
+// Encoding
+var dataToEncode = new Dictionary<string, object?>
+{
+    { "id", 456 }, { "name", "Bob" }, { "active", true }
+};
+string lsfString = LSFParser.EncodeToString(dataToEncode, "user");
+Console.WriteLine(lsfString);
 ```
 
 ## 🎯 Why LSF?
 
-| Problem | JSON | LSF |
-|---------|------|-----|
-| LLM Parse Errors | 18% fail rate | 3% fail rate |
-| Token Efficiency | Baseline | 52% fewer tokens |
-| Complex Data Structures | Baseline | 83% fewer tokens |
-| Error Recovery | Complete failure | Graceful degradation |
-| Nest complexity | Unlimited recursion | Flat only |
+LSF v3.0 prioritizes extreme simplicity and a flat structure to minimize LLM errors and maximize token efficiency for common structured data patterns.
 
 ## 📚 Documentation
 
-- [Full Specification](./docs/SPECIFICATION.md)
+- [Full Specification v3.0](./docs/SPECIFICATION_v3.md)
 - [Implementation Guide](./docs/IMPLEMENTATION.md)
 - [LLM Prompt Templates](./docs/PROMPTS.md)
 - [API Reference](./docs/API.md)
 
 ## 🔧 Language Implementations
 
-- [Python](./implementations/python/)
-- [JavaScript/TypeScript](./implementations/javascript/)
-- [C#](./implementations/csharp/) (Coming Soon)
-- [Rust](./implementations/rust/) (Coming Soon)
+- **JavaScript/TypeScript**: [Complete](./implementations/javascript/)
+- **C#**: [Complete](./implementations/csharp/)
+- **Python**: [Planned (v3.0)](./ver2-parser-python-pllan.md) (*Note: Existing code in `./implementations/python/` may be outdated/for v1.x*)
+- **Rust**: [Coming Soon](./implementations/rust/)
 
 ## 🏃‍♂️ Benchmarks
 
-Our [benchmarking tools](./implementations/javascript/benchmarks/) have revealed:
+Benchmarks comparing LSF v3.0 parsing performance against standard JSON libraries are available for:
 
-- **Token Efficiency**: LSF uses 52% fewer tokens on average compared to JSON
-- **Complex Data**: For deeply nested structures, LSF is up to 83% more token-efficient
-- **Performance**: LSF encoding performance improves with data complexity:
-  - Small datasets: LSF is slower than JSON
-  - Large, complex datasets: LSF encoding can be faster than JSON
+- [JavaScript/TypeScript Benchmarks](./implementations/javascript/benchmarks/)
+- [C# Benchmarks](./implementations/csharp/Zerox.LSF/Zerox.LSF.Benchmarks/)
 
-View detailed results in the [benchmarks README](./implementations/javascript/benchmarks/README.md).
+Key findings generally show LSF parsing directly to a DOM is significantly faster than JSON parsing, though memory allocation patterns may differ. Refer to the specific benchmark results for details.
 
 ## 🤝 Contributing
 
