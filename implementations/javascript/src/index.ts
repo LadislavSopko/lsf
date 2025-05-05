@@ -14,4 +14,8 @@ export { UltraFastLSFParser } from './fast-parser';
 export { HyperFastLSFParser, hyperParse } from './hyper-fast-parser';
 export { getParser, parse, LSFParserType, type LSFParser } from './parser-factory';
 
+// Exports for the new DOM Parser and Visitor
+export { LSFDOMParser, LSFDOMNavigator, parseLSF } from './lsf-dom-parser-preallocated';
+export { LSFToJSON } from './lsf-to-json-visitor';
+
 export const VERSION = '1.3.0'; 
