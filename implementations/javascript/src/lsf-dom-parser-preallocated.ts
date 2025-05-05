@@ -26,7 +26,7 @@ interface ValueSpan {
 }
 
 // Node with pre-allocated children
-interface LSFNode {
+export interface LSFNode {
   type: number;  // Using number for speed: 0=object, 1=field, 2=value, 3=list
   nameStart: number;
   nameLength: number;
@@ -191,25 +191,28 @@ export class LSFDOMParser {
             const field = this.nodes[currentField];
             
             if (nextToken.type === CHAR.L) { // List
-              valueNode.type = 3; // list
+              const listValueNode = this.nodes[valueNode];
+              listValueNode.type = 3; // list
               const list = this.parseListSpans(valueStart, tokenPos + 1);
-              valueNode.valueStart = valueStart;
-              valueNode.valueLength = list.end - valueStart;
-              valueNode.childrenStart = list.spanStart;
-              valueNode.childrenCount = list.spanCount;
+              listValueNode.valueStart = valueStart;
+              listValueNode.valueLength = list.end - valueStart;
+              listValueNode.childrenStart = list.spanStart;
+              listValueNode.childrenCount = list.spanCount;
               tokenPos = list.nextTokenPos;
             } else { // Single value
-              valueNode.type = 2; // value
-              valueNode.valueStart = valueStart;
-              valueNode.valueLength = nextToken.pos - valueStart;
+              const singleValueNode = this.nodes[valueNode];
+              singleValueNode.type = 2; // value
+              singleValueNode.valueStart = valueStart;
+              singleValueNode.valueLength = nextToken.pos - valueStart;
               
               // Check for type hint
               if (nextToken.type === CHAR.T) {
                 const typePos = nextToken.pos + 3;
-                valueNode.typeHint = this.buffer[typePos];
-                tokenPos = this.findNextTokenIndex(this.tokens.indexOf(nextToken.type), CHAR.R) + 1;
+                singleValueNode.typeHint = this.buffer[typePos];
+                tokenPos = this.findNextTokenIndex(this.tokens.indexOf(nextToken.type, tokenPos), CHAR.R) + 1;
               } else {
-                tokenPos = this.findTokenIndex(this.tokens.indexOf(nextToken.type)) + 1;
+                const currentNextTokenIndex = this.tokens.indexOf(nextToken.type, tokenPos);
+                tokenPos = currentNextTokenIndex + 1;
               }
             }
             
@@ -330,6 +333,82 @@ export class LSFDOMParser {
   }
   
   /**
+   * Find the text content (key) between two token indices.
+   */
+  private findKeyBetweenTokens(prevTokenIndex: number, currentTokenIndex: number): { start: number; length: number } | null {
+    if (prevTokenIndex < 0 || currentTokenIndex <= prevTokenIndex || currentTokenIndex >= this.tokenCount) {
+      return null;
+    }
+    
+    const start = this.tokenPositions[prevTokenIndex] + 3; // Position after the previous token's $x§
+    const end = this.tokenPositions[currentTokenIndex];   // Position at the start of the current token's $x§
+    
+    if (start >= end) {
+        return null; // No content between tokens
+    }
+    
+    return { start, length: end - start };
+  }
+  
+  /**
+   * Parse list items and store their spans.
+   */
+  private parseListSpans(listStartPos: number, listTokenIndex: number): { spanStart: number; spanCount: number; end: number; nextTokenPos: number } {
+    const spanStartIndex = this.valueCount;
+    let currentTokenIndex = listTokenIndex;
+    let lastPos = listStartPos;
+
+    while (currentTokenIndex < this.tokenCount) {
+      const tokenType = this.tokens[currentTokenIndex];
+      const tokenPos = this.tokenPositions[currentTokenIndex];
+
+      if (tokenType === CHAR.L) { // List item separator
+        if (tokenPos > lastPos) { // Store span if content exists
+          this.allocateValueSpan(lastPos, tokenPos - lastPos);
+        }
+        lastPos = tokenPos + 3; // Move past $l§
+        currentTokenIndex++;
+      } else if (tokenType === CHAR.F || tokenType === CHAR.R) { // End of list
+        if (tokenPos > lastPos) { // Store last item span
+          this.allocateValueSpan(lastPos, tokenPos - lastPos);
+        }
+        return {
+          spanStart: spanStartIndex,
+          spanCount: this.valueCount - spanStartIndex,
+          end: tokenPos, // Position where list content ends
+          nextTokenPos: currentTokenIndex // Index of the token that ended the list
+        };
+      } else {
+        // Should not happen in a valid list, maybe throw error or log?
+        currentTokenIndex++; // Skip unexpected token
+      }
+    }
+
+    // Reached end of tokens unexpectedly
+    if (this.buffer.length > lastPos) { // Store trailing content if any
+      this.allocateValueSpan(lastPos, this.buffer.length - lastPos);
+    }
+    return {
+      spanStart: spanStartIndex,
+      spanCount: this.valueCount - spanStartIndex,
+      end: this.buffer.length,
+      nextTokenPos: this.tokenCount
+    };
+  }
+
+  /**
+   * Allocate a value span
+   */
+  private allocateValueSpan(start: number, length: number): number {
+      const index = this.valueCount++;
+      if (index >= this.values.length) {
+          this.growValueArray();
+      }
+      this.values[index] = { start, length };
+      return index;
+  }
+  
+  /**
    * Array growth methods (rarely called)
    */
   private growTokenArrays(): void {
@@ -377,6 +456,15 @@ export class LSFDOMParser {
     
     this.nodeChildren = newChildren;
   }
+  
+  private growValueArray(): void {
+      const newSize = this.values.length * 2;
+      const newValues = new Array(newSize);
+      for (let i = 0; i < this.valueCount; i++) {
+          newValues[i] = this.values[i];
+      }
+      this.values = newValues;
+  }
 }
 
 /**
@@ -386,6 +474,7 @@ export class LSFDOMNavigator {
   constructor(
     private nodes: LSFNode[],
     private buffer: Uint8Array,
+    private nodeChildren: number[],
     private textDecoder = new TextDecoder()
   ) {}
   
@@ -416,8 +505,9 @@ export class LSFDOMNavigator {
     const node = this.nodes[nodeIndex];
     const children: number[] = [];
     
+    const childrenStart = node.childrenStart;
     for (let i = 0; i < node.childrenCount; i++) {
-      children.push(this.nodeChildren[node.childrenStart + i]);
+      children.push(this.nodeChildren[childrenStart + i]);
     }
     
     return children;
@@ -447,8 +537,13 @@ export function parseLSF(input: string): { navigator: LSFDOMNavigator; root: num
   const parser = new LSFDOMParser(input);
   const result = parser.parse();
   
+  // Access internal arrays (consider making them public or providing getters if preferred)
+  const internalNodes = (parser as any).nodes as LSFNode[];
+  const internalNodeChildren = (parser as any).nodeChildren as number[];
+  const internalBuffer = (parser as any).buffer as Uint8Array;
+  
   return {
-    navigator: new LSFDOMNavigator(result.nodes, result.buffer),
+    navigator: new LSFDOMNavigator(internalNodes, internalBuffer, internalNodeChildren),
     root: result.root
   };
 }
