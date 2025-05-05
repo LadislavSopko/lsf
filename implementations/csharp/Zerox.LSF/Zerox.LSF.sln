@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zerox.LSF", "Zerox.LSF\Zerox.LSF.csproj", "{E15C2E21-05DB-4F0F-8505-5E8CCC786A05}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zerox.LSF.Tests", "Zerox.LSF.Tests\Zerox.LSF.Tests.csproj", "{4E815F32-9127-475F-87FF-957C28B5C145}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zerox.LSF.Benchmarks", "Zerox.LSF.Benchmarks\Zerox.LSF.Benchmarks.csproj", "{ACA576E7-5554-4537-BD8D-59DE6491FB01}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{4E815F32-9127-475F-87FF-957C28B5C145}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E815F32-9127-475F-87FF-957C28B5C145}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E815F32-9127-475F-87FF-957C28B5C145}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACA576E7-5554-4537-BD8D-59DE6491FB01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACA576E7-5554-4537-BD8D-59DE6491FB01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACA576E7-5554-4537-BD8D-59DE6491FB01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACA576E7-5554-4537-BD8D-59DE6491FB01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
