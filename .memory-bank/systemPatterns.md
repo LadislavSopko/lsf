@@ -101,13 +101,17 @@ The LSF 3.0 parser uses two distinct passes:
 1. First pass identifies all tokens without interpretation
 2. Second pass builds the DOM structure with proper context
 
-### 2. Implicit Arrays
+### 2. Flat Structure
+**LSF 3.0 mandates a flat structure.** Unlike JSON, objects cannot be nested directly within fields. An `$o~` token is only valid at the top level or immediately following a `$f~` token if that field represents the *single* object being defined. Implicit arrays of values are allowed ($f~key$v~1$v~2), but arrays or objects as direct values within a field are not ($f~key$v~[1,2] or $f~key$v~{a:1} are invalid LSF 3.0).
+This simplifies parsing for LLMs and implementations.
+
+### 3. Implicit Arrays
 Arrays in LSF 3.0 are implicit - multiple values for the same field form an array:
 ```
 $f~scores$v~98.5$v~87.3$v~92.1
 ```
 
-### 3. Memory Management
+### 4. Memory Management
 - Pre-allocated TypedArrays with efficient growth strategies
 - Zero-copy approach for all string data
 
