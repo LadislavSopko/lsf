@@ -2,6 +2,7 @@
 
 ## Current Focus
 Implementation of the LSF 3.0 parser in C# based on the updated specification and implementation plan (ver2-parser-c#-plan.md).
+Currently working on **Phase 4: DOM Navigator & Visitor Implementation**.
 
 ### Key Changes from LSF v2.0 to v3.0
 - Reduced to three core tokens: `$o~`, `$f~`, `$v~` (plus optional `$t~`).
@@ -25,50 +26,59 @@ Implementation of the LSF 3.0 parser in C# based on the updated specification an
     *   `JSON.parse` faster on small/medium.
     *   `TokenScanner` scales well; `DOMBuilder` is bottleneck on large data.
     *   `JSON.parse` ~1.4x faster than LSF Scan+Build on large dataset.
-8.  **C# Implementation**: Started project setup.
-    *   Created C# solution with two projects: `Zerox.LSF` (library targeting .NET Standard 2.0) and `Zerox.LSF.Tests` (xUnit tests targeting .NET 9.0).
-    *   Updated implementation plan (ver2-parser-c#-plan.md) to align with the existing C# project.
+8.  **C# Implementation**:
+    *   Created C# solution with projects: `Zerox.LSF` (netstandard2.0) and `Zerox.LSF.Tests` (net9.0, xUnit).
+    *   Updated implementation plan (ver2-parser-c#-plan.md).
+    *   **Phase 1 (Core Data Structures)**: Completed (`TokenType`, `ValueHint`, `LSFNode`, `ParseResult`).
+    *   **Phase 2 (Token Scanner)**: Implemented `TokenScanner.Scan` and unit tests.
+    *   **Phase 3 (DOM Builder)**: Implemented `DOMBuilder.Build` (including implicit nodes, type hints, children population) and unit tests.
 
 ## Current Tasks
-- Starting the C# implementation of the LSF 3.0 parser, following the updated implementation plan.
-- Implementing core data structures in C# version.
+- Starting Phase 4: DOM Navigator & Visitor Implementation.
+- Define and implement `DOMNavigator` class for zero-copy data access.
+- Define `IVisitor` interface.
+- Implement `LSFToJSONVisitor`.
 
 ## Technical Challenges
-- **Optimization**: Improving `DOMBuilder` performance in TS without sacrificing zero-copy navigator benefits.
-- **Cross-Language Consistency**: Ensuring C# implementation matches TypeScript behavior and performance characteristics.
-- **C# Memory Management**: Leveraging Span<T> and Memory<T> for zero-allocation parsing in C#.
+- **Optimization**: Improving `DOMBuilder` performance in TS (future task).
+- **Cross-Language Consistency**: Ensuring C# implementation matches TS behaviour.
+- **C# Memory Management**: Leveraging Span<T> for navigator and potential future optimizations.
+- **Visitor Implementation**: Correctly handling JSON formatting, escaping, and type conversions.
 
 ## Next Steps
-1.  **Implement C# version**: 
-    - Create core data structures (TokenType enum, LSFNode class/struct, ParseResult class)
-    - Implement TokenScanner with ReadOnlySpan<byte> support
-    - Implement DOMBuilder with efficient memory management
-    - Create Navigator and Visitor implementations
-    - Implement LSFEncoder
-2.  **Benchmark C# implementation**: Compare performance to System.Text.Json and TypeScript implementation.
-3.  **Optimize C# implementation**: Apply C#-specific optimizations (ArrayPool<T>, etc).
+1.  **Implement C# Phase 4**: 
+    - Create `DOMNavigator` class and tests.
+    - Create `IVisitor` interface and `LSFToJSONVisitor` class and tests.
+2.  **Implement C# Phase 5**: Create `LSFEncoder` class and tests.
+3.  **Benchmark C# implementation**: Compare performance to System.Text.Json and TypeScript implementation.
+4.  **Optimize C# implementation**: Apply C#-specific optimizations.
 
 ## Open Questions
 - How will the performance of the C# implementation compare to the TypeScript version?
 - Which C#-specific optimizations will provide the most benefit?
-- Should we implement both sync and async versions in C#?
+- What is the best approach for handling potential errors during JSON conversion in the visitor?
 
 ## Current Work Focus
-Beginning C# implementation of the LSF 3.0 parser.
+Starting Phase 4: DOM Navigator and Visitor implementation for the C# LSF parser.
 
 ## Recent Changes
-- Created C# solution structure with library and test projects.
+- Implemented `DOMBuilder` (Phase 3).
+- Created unit tests for `DOMBuilder` (Phase 3).
+- Created `ValueHint` enum.
+- Finalized `LSFNode` struct.
+- Completed `TokenScanner` and tests (Phase 2).
+- Completed Core Data Structures (Phase 1).
+- Created C# solution structure.
 - Updated C# implementation plan.
-- TypeScript implementation previously completed.
 
 ## Next Steps
 
 ### Immediate Tasks
-- **Implement core data structures** in C# version.
-- **Implement TokenScanner** with ReadOnlySpan<byte> support.
+- **Implement `DOMNavigator` class**.
+- **Create unit tests for `DOMNavigator`**.
 
 ### Medium-Term Tasks
-1.  **Complete C# Implementation**: Follow the phases in ver2-parser-c#-plan.md.
+1.  **Complete C# Implementation**: Follow the phases in ver2-parser-c#-plan.md (Currently starting Phase 4).
 2.  **Performance Optimization & Benchmarking**: Compare C# implementation to System.Text.Json.
 3.  **Documentation**: Add XML documentation to C# code and update README.
 
@@ -77,7 +87,8 @@ Beginning C# implementation of the LSF 3.0 parser.
 2.  **Test Framework**: Using .NET 9.0 and xUnit for tests to leverage the latest features.
 3.  **Memory Management**: Will use Span<T> and Memory<T> for zero-copy access.
 4.  **API Design**: Will follow .NET Design Guidelines for a clean and consistent API.
-5.  **Parsing Strategy**: Will implement same two-pass, Token-Data strategy as TypeScript version.
+5.  **Parsing Strategy**: Implemented two-pass (Scan -> Build), Token-Data strategy with implicit nodes and type hints.
+6.  **DOM Structure**: Using `List<LSFNode>` with `ParentIndex` and `List<int>? ChildrenIndices`.
 
 ## Current Blockers
-- None. Ready to begin C# implementation. 
+- None. Ready to start Phase 4. 
