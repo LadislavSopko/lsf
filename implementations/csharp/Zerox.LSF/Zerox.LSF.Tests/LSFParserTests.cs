@@ -22,11 +22,12 @@ namespace Zerox.LSF.Tests
         }
 
         [Fact]
-        public void ParseToJsonString_StringInput_InvalidLsfRoot_ReturnsNull()
+        public void ParseToJsonString_StringInput_InvalidLsfRoot_ReturnsJson_Root_is_implicit()
         {
             string lsf = "$f~Field$v~Value"; // Starts with field
             string? json = LSFParser.ParseToJsonString(lsf);
-            Assert.Null(json);
+            Assert.NotNull(json);
+            Assert.Equal("{\"Field\":\"Value\"}", json); // Assuming basic normalization isn't needed here
         }
 
         [Fact]
@@ -47,12 +48,13 @@ namespace Zerox.LSF.Tests
         }
 
         [Fact]
-        public void ParseToJsonString_BytesInput_InvalidLsfRoot_ReturnsNull()
+        public void ParseToJsonString_BytesInput_InvalidLsfRoot_ReturnsJson_Root_is_implicit()
         {
             string lsf = "$v~Value"; // Starts with value
             var bytes = Utf8NoBom.GetBytes(lsf);
             string? json = LSFParser.ParseToJsonString(bytes);
-            Assert.Null(json);
+            string expectedJson = "{\"\":\"Value\"}"; // Implicit field has empty name
+            Assert.Equal(expectedJson, json);
         }
 
         // --- ParseToDom Tests --- 

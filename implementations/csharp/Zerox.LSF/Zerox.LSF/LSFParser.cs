@@ -45,25 +45,8 @@ namespace Zerox.LSF
                     return null; // Build failed or no nodes
                 }
 
-                // --- TEMPORARY DEBUG CHECK --- 
                 var navigator = new DOMNavigator(lsfInputBytes, parseResult.Nodes);
-                var rootIndices = navigator.GetRootIndices().ToList();
-                if (rootIndices.Count == 0) return null;
-                int rootIndex = rootIndices[0];
-                var rootNode = navigator.GetNode(rootIndex);
-                if (rootNode.Type != TokenType.Object || rootNode.TokenPosition != 0)
-                {
-                    return null; // Explicitly return null if not $o~ at pos 0
-                }
-                // --- END TEMPORARY DEBUG CHECK --- 
-
-                // If we get here, it should be a valid root object at pos 0
-                // For debugging, return a fixed string instead of calling visitor
-                return "{VALID_ROOT_FOUND}"; 
-                
-                // Original code:
-                // var navigator = new DOMNavigator(lsfInputBytes, parseResult.Nodes);
-                // return LSFToJSONVisitor.ToJsonString(navigator);
+                return LSFToJSONVisitor.ToJsonString(navigator);
             }
             catch (Exception ex) // Catch potential errors during scan/build/visit
             {
