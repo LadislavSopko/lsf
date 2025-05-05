@@ -5,8 +5,8 @@
 ### 1.1 Core Components
 - **TokenScanner (Pass 1)**: Single-pass byte array scanner that identifies all tokens without interpretation. **[COMPLETED]**
 - **DOMBuilder (Pass 2)**: Processes identified tokens to build a lazy, zero-copy DOM. **[COMPLETED]**
-- **DOMNavigator**: Zero-copy navigation of the parsed DOM structure.
-- **LSFToJSONVisitor**: Visitor pattern implementation that traverses DOM to build JSON.
+- **DOMNavigator**: Zero-copy navigation of the parsed DOM structure. **[COMPLETED]**
+- **LSFToJSONVisitor**: Visitor pattern implementation that traverses DOM to build JSON. **[NEXT]**
 
 ### 1.2 Key Design Principles
 - **Two-pass architecture**: Strict separation between token identification and DOM construction.
@@ -148,45 +148,21 @@ class DOMBuilder {
 }
 ```
 
-### 2.4 DOMNavigator **[NEXT]**
+### 2.4 DOMNavigator **[COMPLETED]**
 ```typescript
 class DOMNavigator {
   private textDecoder = new TextDecoder();
-  
-  constructor(
-    private nodes: LSFNode[],
-    private buffer: Uint8Array
-  ) {}
-  
-  getName(nodeIndex: number): string {
-    // Decode name span from buffer using TextDecoder
-    // ... (Implementation details as coded) ...
-  }
-  
-  getValue(nodeIndex: number): string {
-    // Decode value span from buffer using TextDecoder
-    // ... (Implementation details as coded) ...
-  }
-  
-  getChildren(nodeIndex: number): number[] {
-    // Should return nodes[nodeIndex].children directly
-    // ... (Implementation details as coded) ...
-  }
-  
-  getRawValue(nodeIndex: number): {start: number, length: number} {
-    // Return raw value span for external processing
-    // ... (Implementation details as coded) ...
-  }
-  
-  getType(nodeIndex: number): number {
-    // Return node type
-    // ... (Implementation details as coded) ...
-  }
-  
-  getTypeHint(nodeIndex: number): number {
-    // Return type hint character code
-    // ... (Implementation details as coded) ...
-  }
+  private nodes: LSFNode[];
+  private buffer: Uint8Array;
+
+  constructor(parseResult: ParseResult) { /* ... */ }
+  private getNode(nodeIndex: number): LSFNode | null { /* ... */ }
+  getName(nodeIndex: number): string { /* Implemented */ }
+  getValue(nodeIndex: number): string { /* Implemented */ }
+  getChildren(nodeIndex: number): number[] { /* Implemented */ }
+  getRawValue(nodeIndex: number): {start: number, length: number} { /* Implemented */ }
+  getType(nodeIndex: number): number { /* Implemented */ }
+  getTypeHint(nodeIndex: number): number { /* Implemented */ }
 }
 ```
 
@@ -282,7 +258,9 @@ class LSFToJSONVisitor implements Visitor {
 
 1. **Phase 1**: Token scanner implementation **[COMPLETED]**
 2. **Phase 2**: DOM builder implementation **[COMPLETED]**
-3. **Phase 3**: DOM navigator and visitor pattern implementation **[IN PROGRESS]**
+3. **Phase 3**: DOM navigator and visitor pattern implementation **[IN PROGRESS - Visitor Remaining]**
+    - 3a. DOMNavigator **[COMPLETED]**
+    - 3b. LSFToJSONVisitor **[NEXT]**
 4. **Phase 4**: Performance optimization and benchmarking
 5. **Phase 5**: Documentation and release
 

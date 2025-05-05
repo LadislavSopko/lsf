@@ -227,6 +227,162 @@ describe('DOMBuilder', () => {
     consoleWarnSpy.mockRestore();
   });
 
+  it('should handle empty object name', () => {
+    const input = '$o~$f~field$v~value';
+    const tokenResult = createTokenScanResult(input);
+    const builder = new DOMBuilder(tokenResult);
+    const parseResult = builder.buildDOM();
+    const rootNode = parseResult.nodes[parseResult.root];
+    expect(rootNode.type).toBe(NODE_TYPE.OBJECT);
+    expect(getNodeName(rootNode, parseResult.buffer)).toBe('');
+    expect(rootNode.children.length).toBe(1);
+  });
+
+  it('should handle empty field name', () => {
+    const input = '$o~obj$f~$v~value';
+    const tokenResult = createTokenScanResult(input);
+    const builder = new DOMBuilder(tokenResult);
+    const parseResult = builder.buildDOM();
+    const rootNode = parseResult.nodes[parseResult.root];
+    const fieldNode = getChildren(rootNode, parseResult)[0];
+    expect(fieldNode.type).toBe(NODE_TYPE.FIELD);
+    expect(getNodeName(fieldNode, parseResult.buffer)).toBe('');
+    expect(fieldNode.children.length).toBe(1);
+  });
+
+  it('should handle empty value', () => {
+    const input = '$o~obj$f~field$v~'; // Empty value before EOF
+    const tokenResult = createTokenScanResult(input);
+    const builder = new DOMBuilder(tokenResult);
+    const parseResult = builder.buildDOM();
+    const rootNode = parseResult.nodes[parseResult.root];
+    const fieldNode = getChildren(rootNode, parseResult)[0];
+    const valueNode = getChildren(fieldNode, parseResult)[0];
+    expect(valueNode.type).toBe(NODE_TYPE.VALUE);
+    expect(getNodeValue(valueNode, parseResult.buffer)).toBe('');
+
+    const input2 = '$o~obj$f~field1$v~$f~field2$v~val2'; // Empty value before next token
+    const tokenResult2 = createTokenScanResult(input2);
+    const builder2 = new DOMBuilder(tokenResult2);
+    const parseResult2 = builder2.buildDOM();
+    const rootNode2 = parseResult2.nodes[parseResult2.root];
+    const fieldNode1 = getChildren(rootNode2, parseResult2)[0];
+    const valueNode1 = getChildren(fieldNode1, parseResult2)[0];
+    expect(valueNode1.type).toBe(NODE_TYPE.VALUE);
+    expect(getNodeValue(valueNode1, parseResult2.buffer)).toBe('');
+  });
+
+  it('should handle an object with no fields', () => {
+    const input = '$o~emptyObject'; // Object followed by EOF
+    const tokenResult = createTokenScanResult(input);
+    const builder = new DOMBuilder(tokenResult);
+    const parseResult = builder.buildDOM();
+    expect(parseResult.nodes.length).toBe(1);
+    const rootNode = parseResult.nodes[parseResult.root];
+    expect(rootNode.type).toBe(NODE_TYPE.OBJECT);
+    expect(getNodeName(rootNode, parseResult.buffer)).toBe('emptyObject');
+    expect(rootNode.children.length).toBe(0);
+
+    const input2 = '$o~obj1$o~obj2'; // Object followed by another object
+    const tokenResult2 = createTokenScanResult(input2);
+    const builder2 = new DOMBuilder(tokenResult2);
+    const parseResult2 = builder2.buildDOM();
+    expect(parseResult2.nodes.length).toBe(2);
+    const rootNode2 = parseResult2.nodes[parseResult2.root]; // obj1
+    expect(rootNode2.type).toBe(NODE_TYPE.OBJECT);
+    expect(getNodeName(rootNode2, parseResult2.buffer)).toBe('obj1');
+    expect(rootNode2.children.length).toBe(0);
+    const obj2Node = parseResult2.nodes[1]; // Assuming index 1
+    expect(obj2Node.type).toBe(NODE_TYPE.OBJECT);
+    expect(getNodeName(obj2Node, parseResult2.buffer)).toBe('obj2');
+    expect(obj2Node.children.length).toBe(0);
+  });
+
+  it('should handle a field with no values', () => {
+    const input = '$o~obj$f~emptyField$f~field2$v~value2';
+    const tokenResult = createTokenScanResult(input);
+    const builder = new DOMBuilder(tokenResult);
+    const parseResult = builder.buildDOM();
+    expect(parseResult.nodes.length).toBe(4); // obj, emptyField, field2, value2
+    const rootNode = parseResult.nodes[parseResult.root];
+    const fields = getChildren(rootNode, parseResult);
+    expect(fields.length).toBe(2);
+    const emptyFieldNode = fields[0];
+    expect(getNodeName(emptyFieldNode, parseResult.buffer)).toBe('emptyField');
+    expect(emptyFieldNode.children.length).toBe(0);
+    const field2Node = fields[1];
+    expect(getNodeName(field2Node, parseResult.buffer)).toBe('field2');
+    expect(field2Node.children.length).toBe(1);
+  });
+
+  it('should correctly handle UTF-8 characters in names and values', () => {
+    const input = '$o~config😊$f~naïveKey$v~你好世界$t~s';
+    const tokenResult = createTokenScanResult(input);
+    const builder = new DOMBuilder(tokenResult);
+    const parseResult = builder.buildDOM();
+    
+    expect(parseResult.nodes.length).toBe(3);
+    const root = parseResult.nodes[0];
+    expect(getNodeName(root, parseResult.buffer)).toBe('config😊');
+    const field = getChildren(root, parseResult)[0];
+    expect(getNodeName(field, parseResult.buffer)).toBe('naïveKey');
+    const value = getChildren(field, parseResult)[0];
+    expect(getNodeValue(value, parseResult.buffer)).toBe('你好世界');
+    expect(value.typeHint).toBe(CHAR_CODE_ASCII.s);
+  });
+
+  it('should handle type hint at end of input', () => {
+    const input = '$o~obj$f~field$v~value$t~'; // Type hint token at very end
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    
+    const tokenResult = createTokenScanResult(input);
+    const builder = new DOMBuilder(tokenResult);
+    const parseResult = builder.buildDOM();
+
+    expect(parseResult.nodes.length).toBe(3); // obj, field, value
+    const valueNode = getChildren(getChildren(parseResult.nodes[0], parseResult)[0], parseResult)[0];
+    expect(getNodeValue(valueNode, parseResult.buffer)).toBe('value');
+    expect(valueNode.typeHint).toBe(0); // Hint ignored
+
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Incomplete type hint at end of buffer'));
+    consoleWarnSpy.mockRestore();
+  });
+
+   it('should handle type hint character overlapping next token', () => {
+    // This case is tricky, depends on exact byte structure. 
+    // Example: $v~value$t~$f~next - hint char 'n' might be byte before '$'
+    // Let's assume hint char is single byte for now.
+    const input = '$o~obj$f~field$v~value$t~n$f~next'; // Type hint char 'n' exists but is ignored
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    
+    const tokenResult = createTokenScanResult(input);
+    const builder = new DOMBuilder(tokenResult);
+    const parseResult = builder.buildDOM();
+
+    expect(parseResult.nodes.length).toBe(4); // obj, field, value, next_field
+    const valueNode = getChildren(getChildren(parseResult.nodes[0], parseResult)[0], parseResult)[0];
+    expect(getNodeValue(valueNode, parseResult.buffer)).toBe('value');
+    expect(valueNode.typeHint).toBe(CHAR_CODE_ASCII.n); // Hint IS applied because char 'n' is before '$f~'
+    
+    // No warning should be logged in this specific valid case
+    // The warning applies if the *position* of the hint char is >= nextTokenPos
+    // expect(consoleWarnSpy).not.toHaveBeenCalled(); 
+    
+    consoleWarnSpy.mockRestore();
+
+    // Add a case where it *should* warn
+    const input2 = '$o~obj$f~field$v~value$t~$f~next'; // Hint char position IS the next token pos
+    const consoleWarnSpy2 = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const tokenResult2 = createTokenScanResult(input2);
+    const builder2 = new DOMBuilder(tokenResult2);
+    const parseResult2 = builder2.buildDOM();
+    const valueNode2 = getChildren(getChildren(parseResult2.nodes[0], parseResult2)[0], parseResult2)[0];
+    expect(valueNode2.typeHint).toBe(0);
+    expect(consoleWarnSpy2).toHaveBeenCalledWith(expect.stringContaining('Type hint character position overlaps'));
+    consoleWarnSpy2.mockRestore();
+
+  });
+
 });
 
 // Helper function to get name/value string (will be part of DOMNavigator later)

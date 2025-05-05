@@ -20,7 +20,8 @@
     "lint": "eslint 'src/**/*.ts'",
     "prettier": "prettier --write 'src/**/*.ts'",
     "docs": "typedoc --out docs src/index.ts",
-    "bundle": "tsup src/index.ts --format cjs,esm --dts --minify --clean"
+    "bundle": "tsup src/index.ts --format cjs,esm --dts --minify --clean",
+    "bench": "vitest bench"
   },
   "keywords": [
     "serialization",

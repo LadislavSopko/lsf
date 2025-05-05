@@ -1,5 +1,6 @@
 import { LSFNode, ParseResult, TokenInfo, DOMNavigator } from './types';
 import { TokenScanResult, TokenScanner } from './token-scanner';
+import { DOMNavigator as DOMNavigatorClass } from './dom-navigator'; // Import the actual navigator
 
 // Re-define CHAR_CODE or import from token-scanner if exported
 const CHAR_CODE = {
@@ -9,8 +10,8 @@ const CHAR_CODE = {
   T: 116, // t
 };
 
-// Constants for node types
-const NODE_TYPE = {
+// Constants for node types (Export this)
+export const NODE_TYPE = {
   OBJECT: 0,
   FIELD: 1,
   VALUE: 2,
@@ -86,10 +87,16 @@ export class DOMBuilder {
 
   buildDOM(): ParseResult {
     if (this.tokens.count === 0) {
-        return { root: -1, nodes: [], buffer: this.buffer, navigator: {} as DOMNavigator };
+        // Need a way to return ParseResult with a null/dummy navigator?
+        // Or maybe navigator constructor handles empty nodes array.
+        const emptyResult: Omit<ParseResult, 'navigator'> = { root: -1, nodes: [], buffer: this.buffer };
+        // Cast needed because TS can't know navigator constructor handles this.
+        // Or refactor constructor/return type.
+        const navigator = new DOMNavigatorClass(emptyResult as ParseResult); 
+        return { ...emptyResult, navigator };
     }
 
-    this.resetState();
+    this.resetState(); // Reset state for build
 
     for (let i = 0; i < this.tokens.count; i++) {
         const currentTokenType = this.tokens.types[i];
@@ -165,20 +172,27 @@ export class DOMBuilder {
         }
     }
 
-    // Basic navigator implementation placeholder
-    const navigator: DOMNavigator = {
-      // TODO: Implement real methods
-    };
-
+    // Trim nodes array first
     const finalNodes = this.nodes.slice(0, this.nodeCount);
-    
     const rootIndex = this.topLevelNodeIndices.length > 0 ? this.topLevelNodeIndices[0] : -1;
 
+    // Prepare the result data needed by the navigator
+    const resultDataForNavigator: Omit<ParseResult, 'navigator'> = {
+        root: rootIndex,
+        nodes: finalNodes,
+        buffer: this.buffer,
+    };
+
+    // Instantiate the real navigator
+    // We need to cast here because the object doesn't have the navigator property yet.
+    const navigator = new DOMNavigatorClass(resultDataForNavigator as ParseResult);
+
+    // Return the complete ParseResult including the navigator
     return {
       root: rootIndex,
       nodes: finalNodes,
       buffer: this.buffer,
-      navigator: navigator, // Instantiate real navigator later
+      navigator: navigator, 
     };
   }
 
