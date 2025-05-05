@@ -3,7 +3,7 @@
  * Directly writes to string builder without intermediate objects
  */
 
-import { LSFDOMNavigator } from './lsf-dom-parser';
+import { LSFDOMNavigator, LSFNode, parseLSF, LSFParseResult, ValueSpan } from './lsf-dom-parser-preallocated';
 
 // Constants for faster comparison
 const NODE_TYPE = {
@@ -126,10 +126,18 @@ class JSONStringBuilder {
 class LSFToJSONVisitor {
   private navigator: LSFDOMNavigator;
   private builder: JSONStringBuilder;
+  private nodes: LSFNode[];
+  private values: ValueSpan[];
+  private nodeChildren: number[];
+  private buffer: Uint8Array;
   private textDecoder = new TextDecoder();
   
-  constructor(navigator: LSFDOMNavigator) {
+  constructor(navigator: LSFDOMNavigator, nodes: LSFNode[], values: ValueSpan[], nodeChildren: number[], buffer: Uint8Array) {
     this.navigator = navigator;
+    this.nodes = nodes;
+    this.values = values;
+    this.nodeChildren = nodeChildren;
+    this.buffer = buffer;
     this.builder = new JSONStringBuilder();
   }
   
@@ -146,24 +154,30 @@ class LSFToJSONVisitor {
    * Visit a single node
    */
   private visitNode(nodeIndex: number): void {
-    const nodeType = this.navigator.getNodeType(nodeIndex);
+    // Access node directly from the stored array
+    if (nodeIndex < 0 || nodeIndex >= this.nodes.length) return;
+    const node = this.nodes[nodeIndex];
+    if (!node) return;
+    
+    // Get children using the navigator
     const children = this.navigator.getChildren(nodeIndex);
     
-    switch (nodeType) {
-      case NODE_TYPE.OBJECT:
+    // Switch on the node's type property
+    switch (node.type) { 
+      case 0: // Object
         this.visitObject(nodeIndex, children);
         break;
         
-      case NODE_TYPE.FIELD:
+      case 1: // Field
         this.visitField(nodeIndex, children);
         break;
         
-      case NODE_TYPE.VALUE:
-        this.visitValue(nodeIndex);
+      case 2: // Value
+        this.visitValue(nodeIndex, node);
         break;
         
-      case NODE_TYPE.LIST:
-        this.visitList(nodeIndex);
+      case 3: // List
+        this.visitList(nodeIndex, node);
         break;
     }
   }
@@ -176,13 +190,13 @@ class LSFToJSONVisitor {
     let firstField = true;
     
     for (const childIndex of children) {
-      if (this.navigator.getNodeType(childIndex) === NODE_TYPE.FIELD) {
+      // Check the type of the child node directly
+      if (childIndex >= 0 && childIndex < this.nodes.length && this.nodes[childIndex]?.type === 1) { // Field
         if (!firstField) {
           this.builder.appendChar(',');
         }
         firstField = false;
-        
-        this.visitNode(childIndex);
+        this.visitNode(childIndex); // Visit the field node
       }
     }
     
@@ -193,47 +207,44 @@ class LSFToJSONVisitor {
    * Visit field node
    */
   private visitField(nodeIndex: number, children: number[]): void {
-    // Get field key
+    // Get field key using navigator
     const key = this.navigator.getName(nodeIndex);
     this.builder.appendQuoted(key);
     this.builder.appendChar(':');
     
-    // Visit value
+    // Visit the first child node (value or list)
     if (children.length > 0) {
       this.visitNode(children[0]);
     } else {
-      this.builder.append('null');
+      this.builder.append('null'); // Field with no value
     }
   }
   
   /**
    * Visit value node
    */
-  private visitValue(nodeIndex: number): void {
-    const typeHint = this.navigator.getTypeHint(nodeIndex);
+  private visitValue(nodeIndex: number, node: LSFNode): void {
+    // Get type hint directly from the node
+    const typeHint = node.typeHint; 
+    const value = this.navigator.getValue(nodeIndex); // Get raw value string via navigator
     
-    if (typeHint === 0) { // string
-      const value = this.navigator.getValue(nodeIndex);
+    if (typeHint === 0) { // string (no type hint)
       this.builder.appendQuoted(value);
     } else {
-      const value = this.navigator.getValue(nodeIndex);
-      
+      // Handle typed values
       switch (typeHint) {
         case TYPE_HINT.NUMBER:
         case TYPE_HINT.FLOAT:
-          this.builder.append(value);
+          this.builder.append(value); // Append directly as JSON number
           break;
-          
         case TYPE_HINT.BOOLEAN:
-          this.builder.append(value.toLowerCase());
+          this.builder.append(value.toLowerCase() === 'true' ? 'true' : 'false');
           break;
-          
         case TYPE_HINT.DATE:
-          this.builder.appendQuoted(value);
+          this.builder.appendQuoted(value); // Append as JSON string
           break;
-          
         default:
-          this.builder.appendQuoted(value);
+          this.builder.appendQuoted(value); // Treat unknown types as string
       }
     }
   }
@@ -241,20 +252,31 @@ class LSFToJSONVisitor {
   /**
    * Visit list node
    */
-  private visitList(nodeIndex: number): void {
-    const listSpans = this.navigator.getListSpans(nodeIndex);
+  private visitList(nodeIndex: number, node: LSFNode): void {
+    // List items are stored as value spans in the `values` array.
+    // The list node's childrenStart/childrenCount point to indices in the `values` array.
+    const spanStartIndex = node.childrenStart;
+    const spanCount = node.childrenCount;
     
     this.builder.appendChar('[');
     let firstItem = true;
     
-    for (const span of listSpans) {
-      if (!firstItem) {
-        this.builder.appendChar(',');
+    for (let i = 0; i < spanCount; i++) {
+      const valueSpanIndex = spanStartIndex + i;
+      if (valueSpanIndex < this.values.length) {
+        const span = this.values[valueSpanIndex];
+        if (span) {
+          if (!firstItem) {
+            this.builder.appendChar(',');
+          }
+          firstItem = false;
+          
+          // Decode the value from the buffer using the span
+          const itemValue = this.textDecoder.decode(this.buffer.subarray(span.start, span.start + span.length));
+          // Lists currently only store raw string values, no type hints per item.
+          this.builder.appendQuoted(itemValue); 
+        }
       }
-      firstItem = false;
-      
-      const value = this.navigator.getValueFromSpan(span);
-      this.builder.appendQuoted(value);
     }
     
     this.builder.appendChar(']');
@@ -269,14 +291,22 @@ export class LSFToJSON {
    * Convert LSF string to JSON using visitor pattern
    */
   static convert(lsfString: string): string {
-    const { navigator, root } = parseLSF(lsfString);
+    // Call the modified parseLSF
+    const parseResult = parseLSF(lsfString);
     
-    if (root === -1) {
-      return '{}';
+    if (parseResult.root === -1) {
+      return '{}'; // Return empty object for invalid/empty input
     }
     
-    const visitor = new LSFToJSONVisitor(navigator);
-    return visitor.visit(root);
+    // Instantiate visitor with all necessary data from parseResult
+    const visitor = new LSFToJSONVisitor(
+      parseResult.navigator,
+      parseResult.nodes,
+      parseResult.values,
+      parseResult.nodeChildren,
+      parseResult.buffer
+    );
+    return visitor.visit(parseResult.root);
   }
   
   /**
@@ -284,34 +314,50 @@ export class LSFToJSON {
    */
   static convertToObject(lsfString: string): any {
     const jsonString = this.convert(lsfString);
-    return JSON.parse(jsonString);
+    try {
+      return JSON.parse(jsonString);
+    } catch (e) {
+      console.error("Failed to parse generated JSON:", e);
+      return null; // Or rethrow/handle error appropriately
+    }
   }
   
   /**
-   * Convert multiple LSF objects
+   * Convert multiple LSF objects (assuming root contains multiple object children)
    */
   static convertArray(lsfString: string): string {
-    const { navigator, root } = parseLSF(lsfString);
+    const parseResult = parseLSF(lsfString);
     
-    if (root === -1) {
+    if (parseResult.root === -1) {
       return '[]';
     }
     
-    const children = navigator.getChildren(root);
-    const builder = new JSONStringBuilder();
-    const visitor = new LSFToJSONVisitor(navigator);
+    // Get children of the root node
+    const children = parseResult.navigator.getChildren(parseResult.root);
+    const builder = new JSONStringBuilder(); // Use a local builder for the array structure
+    
+    // Instantiate the visitor once with the parsed data
+    const visitor = new LSFToJSONVisitor(
+        parseResult.navigator,
+        parseResult.nodes,
+        parseResult.values,
+        parseResult.nodeChildren,
+        parseResult.buffer
+    );
     
     builder.appendChar('[');
     let firstObject = true;
     
     for (const childIndex of children) {
-      if (navigator.getNodeType(childIndex) === NODE_TYPE.OBJECT) {
+      // Check the node type directly from the nodes array
+      if (childIndex >= 0 && childIndex < parseResult.nodes.length && parseResult.nodes[childIndex]?.type === 0) { // Check if it's an object (type 0)
         if (!firstObject) {
           builder.appendChar(',');
         }
         firstObject = false;
         
-        const jsonStr = visitor.visit(childIndex);
+        // Reset the visitor's internal builder and visit the object
+        const jsonStr = visitor.visit(childIndex); 
         builder.append(jsonStr);
       }
     }
@@ -324,15 +370,22 @@ export class LSFToJSON {
    * Stream conversion for large datasets
    */
   static *convertStream(lsfString: string): Generator<string, void, unknown> {
-    const { navigator, root } = parseLSF(lsfString);
+    const parseResult = parseLSF(lsfString);
     
-    if (root === -1) return;
+    if (parseResult.root === -1) return;
     
-    const children = navigator.getChildren(root);
-    const visitor = new LSFToJSONVisitor(navigator);
+    const children = parseResult.navigator.getChildren(parseResult.root);
+    const visitor = new LSFToJSONVisitor(
+        parseResult.navigator,
+        parseResult.nodes,
+        parseResult.values,
+        parseResult.nodeChildren,
+        parseResult.buffer
+      );
     
     for (const childIndex of children) {
-      if (navigator.getNodeType(childIndex) === NODE_TYPE.OBJECT) {
+       // Check the node type directly
+      if (childIndex >= 0 && childIndex < parseResult.nodes.length && parseResult.nodes[childIndex]?.type === 0) { // Check if it's an object (type 0)
         yield visitor.visit(childIndex);
       }
     }
@@ -342,33 +395,21 @@ export class LSFToJSON {
 /**
  * Performance comparison
  */
-export function benchmarkVisitorVsObject(lsfString: string, iterations: number = 1000): {
+// Simplified benchmark focusing only on the direct-to-string visitor
+export function benchmarkVisitor(lsfString: string, iterations: number = 1000): {
   visitorTime: number;
-  objectTime: number;
-  speedup: number;
 } {
-  // Visitor pattern benchmark
+  // Visitor pattern benchmark (direct-to-string)
   const visitorStart = performance.now();
   for (let i = 0; i < iterations; i++) {
-    LSFToJSON.convert(lsfString);
+    LSFToJSON.convert(lsfString); // Use the correct static method
   }
   const visitorEnd = performance.now();
   
-  // Object conversion benchmark
-  const objectStart = performance.now();
-  for (let i = 0; i < iterations; i++) {
-    const converter = LSFToJSON.fromString(lsfString);
-    JSON.stringify(converter.toJSON());
-  }
-  const objectEnd = performance.now();
-  
   const visitorTime = (visitorEnd - visitorStart) / iterations;
-  const objectTime = (objectEnd - objectStart) / iterations;
   
   return {
-    visitorTime,
-    objectTime,
-    speedup: objectTime / visitorTime
+    visitorTime
   };
 }
 

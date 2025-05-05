@@ -19,7 +19,7 @@ const ESTIMATE = {
 } as const;
 
 // Value span with type hints
-interface ValueSpan {
+export interface ValueSpan {
   start: number;
   length: number;
   // Lazy accessors (moved to separate calls for clarity)
@@ -533,18 +533,33 @@ export class LSFDOMNavigator {
 /**
  * Public API
  */
-export function parseLSF(input: string): { navigator: LSFDOMNavigator; root: number } {
+// Define a more detailed return type
+export interface LSFParseResult {
+  navigator: LSFDOMNavigator;
+  root: number;
+  nodes: LSFNode[];
+  values: ValueSpan[];
+  nodeChildren: number[];
+  buffer: Uint8Array;
+}
+
+export function parseLSF(input: string): LSFParseResult {
   const parser = new LSFDOMParser(input);
-  const result = parser.parse();
+  const result = parser.parse(); // parse now returns { root: number }
   
-  // Access internal arrays (consider making them public or providing getters if preferred)
-  const internalNodes = (parser as any).nodes as LSFNode[];
-  const internalNodeChildren = (parser as any).nodeChildren as number[];
-  const internalBuffer = (parser as any).buffer as Uint8Array;
+  // Access internal arrays directly (consider getters if encapsulation is preferred)
+  const nodes = (parser as any).nodes as LSFNode[];
+  const values = (parser as any).values as ValueSpan[];
+  const nodeChildren = (parser as any).nodeChildren as number[];
+  const buffer = (parser as any).buffer as Uint8Array;
   
   return {
-    navigator: new LSFDOMNavigator(internalNodes, internalBuffer, internalNodeChildren),
-    root: result.root
+    navigator: new LSFDOMNavigator(nodes, buffer, nodeChildren),
+    root: result.root,
+    nodes: nodes,
+    values: values,
+    nodeChildren: nodeChildren,
+    buffer: buffer
   };
 }
 
