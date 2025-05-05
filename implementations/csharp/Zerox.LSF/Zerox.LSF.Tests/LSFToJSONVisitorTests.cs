@@ -89,7 +89,7 @@ namespace Zerox.LSF.Tests
         public void ToJsonString_StringEscaping_CorrectlyEscaped()
         {
             string lsf = "$o~$f~quote$v~\"Hello\"$f~slash$v~\\path\\$f~control$v~\t\n\r"; // Quotes, backslashes, control chars
-            string expectedJson = "{\"quote\":\"\\\"Hello\\\"\",\"slash\":\"\\\\path\\\\\",\"control\":\"\\t\\n\\r\"}";
+            string expectedJson = "{\"quote\":\"\\u0022Hello\\u0022\",\"slash\":\"\\\\path\\\\\",\"control\":\"\\t\\n\\r\"}";
             string? actualJson = ConvertLsfToJson(lsf);
             Assert.Equal(NormalizeJson(expectedJson), NormalizeJson(actualJson));
         }

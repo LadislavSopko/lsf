@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Text.Json;
 
 namespace Zerox.LSF
 {
@@ -156,39 +158,39 @@ namespace Zerox.LSF
         // Basic JSON string escaping helper
         private void AppendJsonString(string? value)
         {
-            _sb.Append('"');
-            if (string.IsNullOrEmpty(value)) 
-            { 
-                 _sb.Append('"');
-                 return; 
-            }
+            _sb.Append(JsonSerializer.Serialize(value));
+            //if (string.IsNullOrEmpty(value)) 
+            //{ 
+            //     _sb.Append('"');
+            //     return; 
+            //}
 
-            foreach (char c in value)
-            {
-                switch (c)
-                {
-                    case '\\': _sb.Append("\\"); break;
-                    case '"': _sb.Append("\""); break;
-                    case '\b': _sb.Append("\b"); break;
-                    case '\f': _sb.Append("\f"); break;
-                    case '\n': _sb.Append("\n"); break;
-                    case '\r': _sb.Append("\r"); break;
-                    case '\t': _sb.Append("\t"); break;
-                    default:
-                        if (c < ' ')
-                        {
-                            // Append unicode escape for control characters
-                            _sb.Append("\\u");
-                            _sb.Append(((int)c).ToString("X4", CultureInfo.InvariantCulture));
-                        }
-                        else
-                        {
-                            _sb.Append(c);
-                        }
-                        break;
-                }
-            }
-            _sb.Append('"');
+            //foreach (char c in value)
+            //{
+            //    switch (c)
+            //    {
+            //        case '\\': _sb.Append("\\"); break;
+            //        case '"': _sb.Append("\""); break;
+            //        case '\b': _sb.Append("\b"); break;
+            //        case '\f': _sb.Append("\f"); break;
+            //        case '\n': _sb.Append("\n"); break;
+            //        case '\r': _sb.Append("\r"); break;
+            //        case '\t': _sb.Append("\t"); break;
+            //        default:
+            //            if (c < ' ')
+            //            {
+            //                // Append unicode escape for control characters
+            //                _sb.Append("\\u");
+            //                _sb.Append(((int)c).ToString("X4", CultureInfo.InvariantCulture));
+            //            }
+            //            else
+            //            {
+            //                _sb.Append(c);
+            //            }
+            //            break;
+            //    }
+            //}
+            //_sb.Append('"');
         }
 
         // Basic check if a string is a valid JSON number format
