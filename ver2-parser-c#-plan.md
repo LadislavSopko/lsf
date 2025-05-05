@@ -29,32 +29,32 @@ This document outlines the implementation plan for the LSF 3.0 parser in C#, lev
 
 ### Phase 2: Token Scanner Implementation
 
-- [ ] Implement `TokenScanner` class
-  - [ ] Method to scan input buffer (ReadOnlySpan<byte>) for tokens
-  - [ ] Storage for token positions using native arrays
-  - [ ] Efficient resizing strategy for token arrays
-  - [ ] Handle UTF-8 encoding correctly
-- [ ] Create unit tests for `TokenScanner`
-  - [ ] Basic token recognition
-  - [ ] Position tracking
-  - [ ] Multiple adjacent tokens
-  - [ ] Overlapping token-like sequences
-  - [ ] Handling of non-token `$` characters
+- [x] Implement `TokenScanner` class
+  - [x] Method to scan input buffer (ReadOnlySpan<byte>) for tokens
+  - [x] Storage for token positions using native arrays (List<TokenInfo> used)
+  - [x] Efficient resizing strategy for token arrays (List handles this)
+  - [x] Handle UTF-8 encoding correctly
+- [x] Create unit tests for `TokenScanner`
+  - [x] Basic token recognition
+  - [x] Position tracking
+  - [x] Multiple adjacent tokens
+  - [x] Overlapping token-like sequences (Handled by loop increment)
+  - [x] Handling of non-token `$` characters
 
 ### Phase 3: DOM Builder Implementation
 
-- [ ] Implement `DOMBuilder` class
-  - [ ] Method to build DOM from token positions
-  - [ ] Token-Data strategy (content between tokens)
-  - [ ] Per-node children arrays
-  - [ ] Implicit node creation for malformed input
-  - [ ] Type hint processing
-- [ ] Create unit tests for `DOMBuilder`
-  - [ ] Simple object/field parsing
-  - [ ] Implicit arrays
-  - [ ] Type hints
-  - [ ] Implicit nodes
-  - [ ] Error handling
+- [x] Implement `DOMBuilder` class
+  - [x] Method to build DOM from token positions
+  - [x] Token-Data strategy (content between tokens)
+  - [x] Per-node children arrays (using List<int>)
+  - [x] Implicit node creation for malformed input
+  - [x] Type hint processing
+- [x] Create unit tests for `DOMBuilder`
+  - [x] Simple object/field parsing
+  - [x] Implicit arrays
+  - [x] Type hints
+  - [x] Implicit nodes
+  - [x] Error handling (Basic unexpected token check)
 
 ### Phase 4: DOM Navigator & Visitor Implementation
 
@@ -171,9 +171,9 @@ This document outlines the implementation plan for the LSF 3.0 parser in C#, lev
 
 ## Timeline Estimate
 
-- **Phase 1 (Core Data Structures)**: 1 day
-- **Phase 2 (Token Scanner)**: 2 days
-- **Phase 3 (DOM Builder)**: 2-3 days
+- **Phase 1 (Core Data Structures)**: Complete (Day 1)
+- **Phase 2 (Token Scanner)**: Complete (Day 1-2)
+- **Phase 3 (DOM Builder)**: Complete (Day 2-3)
 - **Phase 4 (Navigator & Visitor)**: 2 days
 - **Phase 5 (Encoder)**: 2 days
 - **Phase 6 (Integration & Benchmarking)**: 1-2 days
