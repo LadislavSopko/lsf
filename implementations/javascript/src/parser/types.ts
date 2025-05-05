@@ -4,8 +4,7 @@ export interface LSFNode {
   nameLength: number;    // Length of name in bytes
   valueStart: number;    // Position in buffer where value starts
   valueLength: number;   // Length of value in bytes
-  childrenStart: number; // Index into children array
-  childrenCount: number; // Number of children
+  children: number[];    // Indices of child nodes
   typeHint: number;      // Type hint character code (0 if none)
 }
 
@@ -22,7 +21,6 @@ export interface DOMNavigator {
 export interface ParseResult {
   root: number;          // Index of root node
   nodes: LSFNode[];      // All nodes
-  nodeChildren: number[];// Flat array of child indices
   buffer: Uint8Array;    // Original buffer (zero-copy)
   navigator: DOMNavigator; // Navigator for easy access
 }

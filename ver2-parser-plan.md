@@ -3,17 +3,20 @@
 ## 1. Architecture Overview
 
 ### 1.1 Core Components
-- **TokenScanner (Pass 1)**: Single-pass byte array scanner that identifies all tokens without interpretation
-- **DOMBuilder (Pass 2)**: Processes identified tokens to build a lazy, zero-copy DOM
-- **DOMNavigator**: Zero-copy navigation of the parsed DOM structure
-- **LSFToJSONVisitor**: Visitor pattern implementation that traverses DOM to build JSON
+- **TokenScanner (Pass 1)**: Single-pass byte array scanner that identifies all tokens without interpretation. **[COMPLETED]**
+- **DOMBuilder (Pass 2)**: Processes identified tokens to build a lazy, zero-copy DOM. **[COMPLETED]**
+- **DOMNavigator**: Zero-copy navigation of the parsed DOM structure.
+- **LSFToJSONVisitor**: Visitor pattern implementation that traverses DOM to build JSON.
 
 ### 1.2 Key Design Principles
-- **Two-pass architecture**: Strict separation between token identification and DOM construction
-- **Zero-copy parsing**: All nodes reference original buffer positions (no string extraction)
-- **Pre-allocated memory**: Estimate and pre-allocate arrays for maximum performance
-- **Visitor pattern**: Clean separation between DOM structure and output format
-- **Speed optimization**: Critical focus on parsing performance
+- **Two-pass architecture**: Strict separation between token identification and DOM construction.
+- **Zero-copy parsing**: All nodes reference original buffer positions (no string extraction).
+- **Pre-allocated memory**: Estimate and pre-allocate arrays for maximum performance.
+- **Visitor pattern**: Clean separation between DOM structure and output format.
+- **Speed optimization**: Critical focus on parsing performance.
+- **Flat Structure**: No nested objects (objects cannot contain other objects directly).
+- **Implicit Nodes**: Handles inputs starting with `$f~` or `$v~` by creating anonymous/default parent nodes.
+- **Per-Node Children**: DOM structure uses `node.children: number[]` for clarity and correctness.
 
 ## 2. Component Details
 
@@ -52,8 +55,7 @@ interface LSFNode {
   nameLength: number;    // Length of name in bytes
   valueStart: number;    // Position in buffer where value starts
   valueLength: number;   // Length of value in bytes
-  childrenStart: number; // Index into children array
-  childrenCount: number; // Number of children
+  children: number[];    // Indices of child nodes (Refactored from childrenStart/Count)
   typeHint: number;      // Type hint character code (0 if none)
 }
 
@@ -63,17 +65,16 @@ interface TokenInfo {
 }
 
 interface ParseResult {
-  root: number;          // Index of root node
+  root: number;          // Index of first top-level object node (-1 if none)
   nodes: LSFNode[];      // All nodes
-  nodeChildren: number[];// Flat array of child indices
   buffer: Uint8Array;    // Original buffer (zero-copy)
-  navigator: DOMNavigator; // Navigator for easy access
+  navigator: DOMNavigator; // Navigator for easy access (placeholder until implemented)
 }
 ```
 
 ### 2.3 Two-Pass Implementation
 
-#### 2.3.1 Pass 1: TokenScanner
+#### 2.3.1 Pass 1: TokenScanner **[COMPLETED]**
 ```typescript
 class TokenScanner {
   private buffer: Uint8Array;
@@ -89,76 +90,107 @@ class TokenScanner {
     // Return token information
   }
   
+  private addToken(type: number, position: number): void {
+    // ... (Implementation details as coded) ...
+  }
+  
   private growArrays(): void {
     // Efficient growth strategy for typed arrays
   }
 }
 ```
 
-#### 2.3.2 Pass 2: DOMBuilder
+#### 2.3.2 Pass 2: DOMBuilder **[COMPLETED]**
 ```typescript
 class DOMBuilder {
   private nodes: LSFNode[];           // Pre-allocated array
-  private nodeChildren: number[];     // Pre-allocated flat array
   private nodeCount: number = 0;
-  private childrenCount: number = 0;
+  private nodeCapacity: number = 0;
   
-  buildDOM(tokenResult: TokenScanResult): ParseResult {
-    // Process tokens sequentially
-    // Track object and field context
-    // Build DOM structure without copying strings
-    // Connect children properly
-    // Return complete parse result
+  // State variables
+  private currentObjectNodeIndex = -1;
+  private currentFieldNodeIndex = -1;
+  private lastValueNodeIndex = -1;
+  private topLevelNodeIndices: number[] = [];
+
+  constructor(tokenResult: TokenScanResult) {
+    // ... (Implementation details as coded) ...
+  }
+  
+  buildDOM(): ParseResult {
+    // Implemented using Token-Data strategy
+    // Handles implicit nodes
+    // Returns ParseResult with nodes array
+    // ... (Implementation details as coded) ...
   }
   
   private allocateNode(): number {
-    // Efficient node allocation with array growth
+    // Resets node with empty children array
+    // ... (Implementation details as coded) ...
   }
   
   private addChild(parentIndex: number, childIndex: number): void {
-    // Add child reference to flat children array
+    // Adds childIndex to parentNode.children array
+    // ... (Implementation details as coded) ...
+  }
+
+  private ensureObjectContext(): void {
+    // ... (Implementation details as coded) ...
+  }
+  
+  private ensureFieldContext(): void {
+    // ... (Implementation details as coded) ...
+  }
+
+  private growNodeArray(): void {
+    // ... (Implementation details as coded) ...
   }
 }
 ```
 
-### 2.4 DOMNavigator
+### 2.4 DOMNavigator **[NEXT]**
 ```typescript
 class DOMNavigator {
   private textDecoder = new TextDecoder();
   
   constructor(
     private nodes: LSFNode[],
-    private buffer: Uint8Array,
-    private nodeChildren: number[]
+    private buffer: Uint8Array
   ) {}
   
   getName(nodeIndex: number): string {
     // Decode name span from buffer using TextDecoder
+    // ... (Implementation details as coded) ...
   }
   
   getValue(nodeIndex: number): string {
     // Decode value span from buffer using TextDecoder
+    // ... (Implementation details as coded) ...
   }
   
   getChildren(nodeIndex: number): number[] {
-    // Retrieve children indices from flat array
+    // Should return nodes[nodeIndex].children directly
+    // ... (Implementation details as coded) ...
   }
   
   getRawValue(nodeIndex: number): {start: number, length: number} {
     // Return raw value span for external processing
+    // ... (Implementation details as coded) ...
   }
   
   getType(nodeIndex: number): number {
     // Return node type
+    // ... (Implementation details as coded) ...
   }
   
   getTypeHint(nodeIndex: number): number {
     // Return type hint character code
+    // ... (Implementation details as coded) ...
   }
 }
 ```
 
-### 2.5 LSFToJSONVisitor
+### 2.5 LSFToJSONVisitor **[NEXT]**
 ```typescript
 interface Visitor {
   visitObject(nodeIndex: number): void;
@@ -248,9 +280,9 @@ class LSFToJSONVisitor implements Visitor {
 
 ## 6. Implementation Timeline
 
-1. **Phase 1**: Token scanner implementation with optimized detection
-2. **Phase 2**: DOM builder implementation with zero-copy strategy
-3. **Phase 3**: DOM navigator and visitor pattern implementation
+1. **Phase 1**: Token scanner implementation **[COMPLETED]**
+2. **Phase 2**: DOM builder implementation **[COMPLETED]**
+3. **Phase 3**: DOM navigator and visitor pattern implementation **[IN PROGRESS]**
 4. **Phase 4**: Performance optimization and benchmarking
 5. **Phase 5**: Documentation and release
 

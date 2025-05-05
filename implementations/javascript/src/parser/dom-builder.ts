@@ -17,63 +17,166 @@ const NODE_TYPE = {
 };
 
 export class DOMBuilder {
-  private nodes!: LSFNode[];           // Pre-allocated array
-  private nodeChildren!: number[];     // Pre-allocated flat array (Corrected type)
+  private nodes!: LSFNode[];
   private nodeCount: number = 0;
-  private childrenCount: number = 0;
   private nodeCapacity: number = 0;
-  private childrenCapacity: number = 0;
 
   private tokens!: TokenScanResult;
   private buffer!: Uint8Array;
-  private tokenIndex: number = 0;
-
-  // Constants for initial allocation estimation
-  private static NODE_ESTIMATE_FACTOR = 1.5; // Guess: Nodes approx 1.5x tokens
-  private static CHILDREN_ESTIMATE_FACTOR = 2; // Guess: Avg 2 children refs per node?
+  
+  private static NODE_ESTIMATE_FACTOR = 1.5;
   private static MIN_CAPACITY = 256;
+
+  private currentObjectNodeIndex = -1;
+  private currentFieldNodeIndex = -1;
+  private lastValueNodeIndex = -1;
+  private topLevelNodeIndices: number[] = [];
 
   constructor(tokenResult: TokenScanResult) {
     this.tokens = tokenResult;
     this.buffer = tokenResult.buffer;
-    this.tokenIndex = 0;
 
-    // Pre-allocate based on token count
     this.nodeCapacity = Math.max(DOMBuilder.MIN_CAPACITY, Math.ceil(tokenResult.count * DOMBuilder.NODE_ESTIMATE_FACTOR));
-    this.childrenCapacity = Math.max(DOMBuilder.MIN_CAPACITY * 2, Math.ceil(this.nodeCapacity * DOMBuilder.CHILDREN_ESTIMATE_FACTOR));
 
-    this.nodes = new Array(this.nodeCapacity).fill(null).map(() => ({ 
-        type: 0, nameStart: 0, nameLength: 0, valueStart: 0, 
-        valueLength: 0, childrenStart: -1, childrenCount: 0, typeHint: 0 
-    })); // Initialize with default structure maybe? Or handle allocation differently.
-    // Use a standard number array for flexibility, can optimize later if needed
-    this.nodeChildren = new Array(this.childrenCapacity).fill(0);
+    this.nodes = new Array(this.nodeCapacity);
+    for (let i = 0; i < this.nodeCapacity; i++) {
+        this.nodes[i] = { type: 0, nameStart: 0, nameLength: 0, valueStart: 0, valueLength: 0, children: [], typeHint: 0 };
+    }
     
-    this.nodeCount = 0;
-    this.childrenCount = 0;
+    this.resetState();
+  }
+
+  private resetState(): void {
+      this.nodeCount = 0;
+      this.topLevelNodeIndices = [];
+      this.currentObjectNodeIndex = -1;
+      this.currentFieldNodeIndex = -1;
+      this.lastValueNodeIndex = -1;
+  }
+
+  // Helper to ensure an object context exists, creating anonymous if needed
+  private ensureObjectContext(): void {
+      if (this.currentObjectNodeIndex === -1) {
+          const implicitObjIndex = this.allocateNode();
+          const node = this.nodes[implicitObjIndex]; // Get ref after potential grow
+          node.type = NODE_TYPE.OBJECT;
+          node.nameStart = 0; // Indicate anonymous
+          node.nameLength = 0;
+          this.topLevelNodeIndices.push(implicitObjIndex);
+          this.currentObjectNodeIndex = implicitObjIndex;
+          this.currentFieldNodeIndex = -1; // Reset field context for new object
+          this.lastValueNodeIndex = -1;
+      }
+  }
+
+  // Helper to ensure a field context exists, creating default if needed
+  private ensureFieldContext(): void {
+      this.ensureObjectContext(); // First, ensure we are inside an object
+      if (this.currentFieldNodeIndex === -1) {
+          const implicitFieldIndex = this.allocateNode();
+          const node = this.nodes[implicitFieldIndex]; // Get ref after potential grow
+          node.type = NODE_TYPE.FIELD;
+          node.nameStart = 0; // Indicate implicit/default field
+          node.nameLength = 0;
+          this.addChild(this.currentObjectNodeIndex, implicitFieldIndex);
+          this.currentFieldNodeIndex = implicitFieldIndex;
+          this.lastValueNodeIndex = -1; // Reset value context for new field
+      }
   }
 
   buildDOM(): ParseResult {
-    // TODO: Implement the core logic to process tokens and build the DOM
-    // This will involve iterating through this.tokens, calling allocateNode, addChild,
-    // and setting node properties based on token types and positions.
+    if (this.tokens.count === 0) {
+        return { root: -1, nodes: [], buffer: this.buffer, navigator: {} as DOMNavigator };
+    }
 
-    // Placeholder: Need root node index
-    const rootIndex = 0; 
+    this.resetState();
 
-    // Placeholder navigator
+    for (let i = 0; i < this.tokens.count; i++) {
+        const currentTokenType = this.tokens.types[i];
+        const currentTokenPos = this.tokens.positions[i];
+
+        // Determine content span using <token><data> strategy
+        const contentStart = currentTokenPos + 3; // Start after token like $o~
+        const nextTokenPos = (i + 1 < this.tokens.count) ? this.tokens.positions[i + 1] : this.buffer.length;
+        const contentEnd = nextTokenPos;
+        const contentLength = Math.max(0, contentEnd - contentStart); // Ensure non-negative
+
+        switch (currentTokenType) {
+            case CHAR_CODE.O: { // $o~
+                const newNodeIndex = this.allocateNode();
+                const node = this.nodes[newNodeIndex];
+                node.type = NODE_TYPE.OBJECT;
+                node.nameStart = contentStart;
+                node.nameLength = contentLength;
+                
+                this.topLevelNodeIndices.push(newNodeIndex);
+                this.currentObjectNodeIndex = newNodeIndex;
+                this.currentFieldNodeIndex = -1; // Reset context
+                this.lastValueNodeIndex = -1;
+                break;
+            }
+            case CHAR_CODE.F: { // $f~
+                this.ensureObjectContext(); // Ensure we have an object
+                const newNodeIndex = this.allocateNode();
+                const node = this.nodes[newNodeIndex];
+                node.type = NODE_TYPE.FIELD;
+                node.nameStart = contentStart;
+                node.nameLength = contentLength;
+                
+                this.addChild(this.currentObjectNodeIndex, newNodeIndex);
+                this.currentFieldNodeIndex = newNodeIndex;
+                this.lastValueNodeIndex = -1; // Reset context
+                break;
+            }
+            case CHAR_CODE.V: { // $v~
+                this.ensureFieldContext(); // Ensure we have object and field
+                const newNodeIndex = this.allocateNode();
+                const node = this.nodes[newNodeIndex];
+                node.type = NODE_TYPE.VALUE;
+                node.valueStart = contentStart;
+                node.valueLength = contentLength;
+                
+                this.addChild(this.currentFieldNodeIndex, newNodeIndex);
+                this.lastValueNodeIndex = newNodeIndex; // Track this value node
+                break;
+            }
+            case CHAR_CODE.T: { // $t~
+                if (this.lastValueNodeIndex !== -1) {
+                    const valueNode = this.nodes[this.lastValueNodeIndex];
+                    // Type hint is the single byte immediately following $t~
+                    // But contentStart/Length refers to text BETWEEN $t~ and next token
+                    const typeHintCharPos = currentTokenPos + 3; // Position right after $t~
+                    if (typeHintCharPos < this.buffer.length) { 
+                         // Check if the hint char itself is part of the next token's marker
+                         if (typeHintCharPos < nextTokenPos) {
+                             valueNode.typeHint = this.buffer[typeHintCharPos];
+                         } else {
+                             console.warn(`Type hint character position overlaps with next token at index ${i}. Hint ignored.`);
+                         }
+                    } else {
+                        console.warn(`Incomplete type hint at end of buffer, index ${i}. Hint ignored.`);
+                    }
+                } else {
+                    console.warn(`Standalone $t~ token encountered at position ${currentTokenPos}, index ${i}. Ignoring.`);
+                }
+                this.lastValueNodeIndex = -1; // $t~ always resets the last value context
+                break;
+            }
+        }
+    }
+
+    // Basic navigator implementation placeholder
     const navigator: DOMNavigator = {
-      // Implement navigator methods later
+      // TODO: Implement real methods
     };
-    
-    // Trim arrays before returning
+
     const finalNodes = this.nodes.slice(0, this.nodeCount);
-    const finalChildren = this.nodeChildren.slice(0, this.childrenCount);
+    
+    const rootIndex = this.topLevelNodeIndices.length > 0 ? this.topLevelNodeIndices[0] : -1;
 
     return {
       root: rootIndex,
       nodes: finalNodes,
-      nodeChildren: finalChildren,
       buffer: this.buffer,
       navigator: navigator, // Instantiate real navigator later
     };
@@ -84,62 +187,37 @@ export class DOMBuilder {
       this.growNodeArray();
     }
     const newNodeIndex = this.nodeCount++;
-    // Initialize node properties (if not done in constructor)
-    // this.nodes[newNodeIndex] = { ... default values ... };
+    // Re-initialize node to default state after potential grow
+    const node = this.nodes[newNodeIndex];
+    node.type = 0; node.nameStart = 0; node.nameLength = 0; node.valueStart = 0;
+    node.valueLength = 0; 
+    node.children = []; // Initialize children array
+    node.typeHint = 0;
     return newNodeIndex;
   }
 
   private addChild(parentIndex: number, childIndex: number): void {
-    if (parentIndex < 0 || parentIndex >= this.nodeCount) {
-        console.error(`Invalid parentIndex: ${parentIndex}`);
+    if (parentIndex < 0 || parentIndex >= this.nodeCount || childIndex < 0 || childIndex >= this.nodeCount) {
+        console.error(`[addChild] Invalid index. Parent: ${parentIndex}, Child: ${childIndex}, NodeCount: ${this.nodeCount}`);
         return;
     }
-    if (this.childrenCount >= this.childrenCapacity) {
-      this.growChildrenArray();
-    }
-
-    const parentNode = this.nodes[parentIndex];
-    if (parentNode.childrenStart === -1) {
-      // First child
-      parentNode.childrenStart = this.childrenCount;
-    }
-    // Ensure children are contiguous for this parent (important!)
-    // This simple approach assumes children are added contiguously during build
-    if (parentNode.childrenStart + parentNode.childrenCount !== this.childrenCount) {
-        console.warn(`Non-contiguous child add detected for parent ${parentIndex}. Current childrenCount: ${this.childrenCount}, expected start: ${parentNode.childrenStart + parentNode.childrenCount}`);
-        // Handle potential fragmentation or re-structure if needed, or rely on build order
-    }
     
-    this.nodeChildren[this.childrenCount++] = childIndex;
-    parentNode.childrenCount++;
+    const parentNode = this.nodes[parentIndex];
+    parentNode.children.push(childIndex); // Add to parent's own list
   }
   
   private growNodeArray(): void {
     const oldCapacity = this.nodeCapacity;
     this.nodeCapacity *= 2;
     console.log(`Growing node array from ${oldCapacity} to ${this.nodeCapacity}`);
-    const newNodes = new Array(this.nodeCapacity).fill(null);
-    // Copy existing nodes - Array.prototype.slice might be faster or System.arraycopy equivalent
+    const newNodes = new Array(this.nodeCapacity);
     for(let i = 0; i < oldCapacity; i++) {
         newNodes[i] = this.nodes[i];
     }
-    // Initialize new part if needed
     for (let i = oldCapacity; i < this.nodeCapacity; i++) {
-        newNodes[i] = { type: 0, nameStart: 0, nameLength: 0, valueStart: 0, valueLength: 0, childrenStart: -1, childrenCount: 0, typeHint: 0 };
+        // Initialize new slots
+        newNodes[i] = { type: 0, nameStart: 0, nameLength: 0, valueStart: 0, valueLength: 0, children: [], typeHint: 0 };
     }
     this.nodes = newNodes;
-  }
-
-  private growChildrenArray(): void {
-    const oldCapacity = this.childrenCapacity;
-    this.childrenCapacity *= 2;
-    console.log(`Growing children array from ${oldCapacity} to ${this.childrenCapacity}`);
-    const newChildren = new Array(this.childrenCapacity).fill(0); // Use standard array
-    // Copy elements manually for standard array
-    for(let i = 0; i < oldCapacity; i++) {
-        newChildren[i] = this.nodeChildren[i];
-    }
-    // newChildren.set(this.nodeChildren); // set is for TypedArrays
-    this.nodeChildren = newChildren;
   }
 } 
