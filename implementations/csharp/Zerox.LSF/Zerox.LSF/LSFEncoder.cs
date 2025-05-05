@@ -78,7 +78,7 @@ namespace Zerox.LSF
             {
                 sb.Append(ValueToken).Append(TypeHintToken).Append('z'); // Value is empty for null
             }
-            else if (value is IEnumerable enumerable && !(value is string)) // Handle lists/arrays, but not strings
+            else if (value is IEnumerable enumerable && !(value is string) && !(value is IDictionary)) // Handle lists/arrays, but not strings
             {
                  int count = 0;
                  foreach (var item in enumerable)
