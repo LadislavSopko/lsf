@@ -50,4 +50,42 @@ describe('Public API exports', () => {
     expect(parsed.price).toBe(999.99);
     expect(parsed.inStock).toBe(true);
   });
+
+  describe('Error Handling', () => {
+    it('should throw on invalid type code', () => {
+      const testCases = [
+        '$o~test$f~value$v~123$t~x',
+        '$o~test$f~value$v~abc$t~q',
+        '$o~test$f~value$v~true$t~1',
+        '$o~test$f~value$v~data$t~@'
+      ];
+
+      for (const input of testCases) {
+        expect(() => parseToJsonString(input)).toThrow(/Invalid type hint/);
+      }
+    });
+
+    it('should accept all valid type codes', () => {
+      const testCases = [
+        ['$o~test$f~intVal$v~123$t~n', '"intVal":123'],
+        ['$o~test$f~floatVal$v~123.45$t~f', '"floatVal":123.45'],
+        ['$o~test$f~boolVal$v~true$t~b', '"boolVal":true'],
+        ['$o~test$f~dateVal$v~2025-01-23$t~d', '"dateVal":"2025-01-23"'],
+        ['$o~test$f~strVal$v~hello$t~s', '"strVal":"hello"'],
+        ['$o~test$f~nullVal$v~$t~z', '"nullVal":null']
+      ];
+
+      for (const [input, expectedContent] of testCases) {
+        const result = parseToJsonString(input);
+        expect(result).toContain(expectedContent);
+      }
+    });
+
+    it('should throw on input size exceeded', () => {
+      // Create a string larger than 10MB
+      const largeInput = '$o~test' + '$f~field$v~value'.repeat(700000);
+      
+      expect(() => parseToJsonString(largeInput)).toThrow(/Input size exceeds maximum allowed size/);
+    });
+  });
 });

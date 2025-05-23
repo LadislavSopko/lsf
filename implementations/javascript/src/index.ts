@@ -16,20 +16,10 @@ export type { LSFNode, ParseResult, TokenInfo, DOMNavigator } from './parser/typ
  * @returns ParseResult with DOM navigator
  */
 export function parseToDom(input: string): ParseResult {
-  try {
-    const scanner = new TokenScanner();
-    const scanResult = scanner.scan(input);
-    const builder = new DOMBuilder(scanResult);
-    return builder.buildDOM();
-  } catch (error) {
-    // Return a failed ParseResult
-    return {
-      root: null as any,
-      nodes: [],
-      buffer: new Uint8Array(),
-      navigator: null as any
-    };
-  }
+  const scanner = new TokenScanner();
+  const scanResult = scanner.scan(input);
+  const builder = new DOMBuilder(scanResult);
+  return builder.buildDOM();
 }
 
 /**
@@ -38,20 +28,10 @@ export function parseToDom(input: string): ParseResult {
  * @returns ParseResult with DOM navigator
  */
 export function parseToDomFromBytes(input: Uint8Array): ParseResult {
-  try {
-    const scanner = new TokenScanner();
-    const scanResult = scanner.scan(input);
-    const builder = new DOMBuilder(scanResult);
-    return builder.buildDOM();
-  } catch (error) {
-    // Return a failed ParseResult
-    return {
-      root: null as any,
-      nodes: [],
-      buffer: new Uint8Array(),
-      navigator: null as any
-    };
-  }
+  const scanner = new TokenScanner();
+  const scanResult = scanner.scan(input);
+  const builder = new DOMBuilder(scanResult);
+  return builder.buildDOM();
 }
 
 /**
@@ -60,17 +40,21 @@ export function parseToDomFromBytes(input: Uint8Array): ParseResult {
  * @returns JSON string or null on error
  */
 export function parseToJsonString(input: string): string | null {
-  try {
-    const result = parseToDom(input);
-    if (!result.navigator) {
-      return null;
-    }
-    
-    const visitor = new LSFToJSONVisitor(result);
-    return visitor.buildJSON();
-  } catch {
+  // Add size limit check (10MB default)
+  const maxSizeInMB = 10;
+  const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+  
+  if (input.length > maxSizeInBytes) {
+    throw new Error(`Input size exceeds maximum allowed size of ${maxSizeInMB}MB`);
+  }
+  
+  const result = parseToDom(input);
+  if (!result.navigator) {
     return null;
   }
+  
+  const visitor = new LSFToJSONVisitor(result);
+  return visitor.buildJSON();
 }
 
 /**
@@ -79,17 +63,13 @@ export function parseToJsonString(input: string): string | null {
  * @returns JSON string or null on error
  */
 export function parseToJsonStringFromBytes(input: Uint8Array): string | null {
-  try {
-    const result = parseToDomFromBytes(input);
-    if (!result.navigator) {
-      return null;
-    }
-    
-    const visitor = new LSFToJSONVisitor(result);
-    return visitor.buildJSON();
-  } catch {
+  const result = parseToDomFromBytes(input);
+  if (!result.navigator) {
     return null;
   }
+  
+  const visitor = new LSFToJSONVisitor(result);
+  return visitor.buildJSON();
 }
 
 // Re-export encoder functions with simpler names

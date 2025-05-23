@@ -19,20 +19,17 @@ def parse_to_dom(input_data: Union[str, bytes]) -> ParseResult:
     Returns:
         ParseResult with nodes or error
     """
-    try:
-        # Convert to bytes if string
-        if isinstance(input_data, str):
-            buffer = input_data.encode('utf-8')
-        else:
-            buffer = input_data
-        
-        # Scan tokens
-        tokens = TokenScanner.scan(buffer)
-        
-        # Build DOM
-        return DOMBuilder.build(tokens, buffer)
-    except Exception as e:
-        return ParseResult(success=False, nodes=None, error_message=str(e))
+    # Convert to bytes if string
+    if isinstance(input_data, str):
+        buffer = input_data.encode('utf-8')
+    else:
+        buffer = input_data
+    
+    # Scan tokens
+    tokens = TokenScanner.scan(buffer)
+    
+    # Build DOM
+    return DOMBuilder.build(tokens, buffer)
 
 
 def parse_to_json(input_data: Union[str, bytes]) -> Optional[str]:
@@ -45,24 +42,28 @@ def parse_to_json(input_data: Union[str, bytes]) -> Optional[str]:
     Returns:
         JSON string or None on error
     """
-    try:
-        # Parse to DOM
-        result = parse_to_dom(input_data)
-        if not result.success or result.nodes is None:
-            return None
-        
-        # Convert to bytes for navigator
-        if isinstance(input_data, str):
-            buffer = input_data.encode('utf-8')
-        else:
-            buffer = input_data
-        
-        # Navigate and convert to JSON
-        navigator = DOMNavigator(buffer, result.nodes)
-        visitor = LSFToJSONVisitor(navigator)
-        return visitor.to_json_string()
-    except:
+    # Add size limit check (10MB default)
+    max_size_mb = 10
+    max_size_bytes = max_size_mb * 1024 * 1024
+    
+    if isinstance(input_data, str):
+        if len(input_data) > max_size_bytes:
+            raise ValueError(f"Input size exceeds maximum allowed size of {max_size_mb}MB")
+        buffer = input_data.encode('utf-8')
+    else:
+        if len(input_data) > max_size_bytes:
+            raise ValueError(f"Input size exceeds maximum allowed size of {max_size_mb}MB")
+        buffer = input_data
+    
+    # Parse to DOM
+    result = parse_to_dom(input_data)
+    if not result.success or result.nodes is None:
         return None
+    
+    # Navigate and convert to JSON
+    navigator = DOMNavigator(buffer, result.nodes)
+    visitor = LSFToJSONVisitor(navigator)
+    return visitor.to_json_string()
 
 
 def encode_to_string(data: Any, object_name: Optional[str] = None) -> str:

@@ -170,6 +170,9 @@ export class LSFToJSONVisitor implements Visitor {
         // Add validation? Fallback?
         this.result.append(JSON.stringify(rawValue)); // Treat as string for now
         break;
+      case 'z': // null
+        this.result.append('null');
+        break;
       case 's': // string
       default: // Default to string
         this.result.append(JSON.stringify(rawValue)); // Includes escaping

@@ -24,6 +24,15 @@ namespace Zerox.LSF
         {
             if (string.IsNullOrEmpty(lsfInput)) return null;
             
+            // Add size limit check (10MB default)
+            const int maxSizeInMB = 10;
+            const int maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+            
+            if (lsfInput.Length > maxSizeInBytes)
+            {
+                throw new ArgumentException($"Input size exceeds maximum allowed size of {maxSizeInMB}MB");
+            }
+            
             ReadOnlyMemory<byte> inputMemory = Utf8NoBom.GetBytes(lsfInput);
             return ParseToJsonString(inputMemory);
         }
@@ -35,24 +44,16 @@ namespace Zerox.LSF
         /// <returns>A JSON string representation of the LSF data, or null if parsing fails or the root is not a valid object.</returns>
         public static string? ParseToJsonString(ReadOnlyMemory<byte> lsfInputBytes)
         {
-            try
-            {
-                var tokens = TokenScanner.Scan(lsfInputBytes.Span);
-                var parseResult = DOMBuilder.Build(tokens, lsfInputBytes.Span);
+            var tokens = TokenScanner.Scan(lsfInputBytes.Span);
+            var parseResult = DOMBuilder.Build(tokens, lsfInputBytes.Span);
 
-                if (!parseResult.Success || parseResult.Nodes == null || parseResult.Nodes.Count == 0)
-                {
-                    return null; // Build failed or no nodes
-                }
-
-                var navigator = new DOMNavigator(lsfInputBytes, parseResult.Nodes);
-                return LSFToJSONVisitor.ToJsonString(navigator);
-            }
-            catch (Exception ex) // Catch potential errors during scan/build/visit
+            if (!parseResult.Success || parseResult.Nodes == null || parseResult.Nodes.Count == 0)
             {
-                Console.Error.WriteLine($"LSF parsing to JSON failed: {ex.Message}"); // Simple error reporting
-                return null;
+                return null; // Build failed or no nodes
             }
+
+            var navigator = new DOMNavigator(lsfInputBytes, parseResult.Nodes);
+            return LSFToJSONVisitor.ToJsonString(navigator);
         }
 
         /// <summary>
@@ -76,18 +77,9 @@ namespace Zerox.LSF
         /// <returns>A ParseResult containing the DOM nodes and success status.</returns>
         public static ParseResult ParseToDom(ReadOnlyMemory<byte> lsfInputBytes)
         {
-            try
-            {
-                var tokens = TokenScanner.Scan(lsfInputBytes.Span);
-                // Build returns a ParseResult directly
-                return DOMBuilder.Build(tokens, lsfInputBytes.Span); 
-            }
-             catch (Exception ex) // Catch potential errors during scan/build
-            {
-                // Optional: Log the exception ex
-                Console.Error.WriteLine($"LSF parsing to DOM failed: {ex.Message}"); // Simple error reporting
-                return new ParseResult { Success = false, ErrorMessage = ex.Message };
-            }
+            var tokens = TokenScanner.Scan(lsfInputBytes.Span);
+            // Build returns a ParseResult directly
+            return DOMBuilder.Build(tokens, lsfInputBytes.Span);
         }
 
         #endregion

@@ -141,6 +141,7 @@ namespace Zerox.LSF
             switch (node.TypeHint)
             {
                 case ValueHint.Number:
+                case ValueHint.Float:
                     // Basic validation: Try parsing, default to 0 if invalid?
                     // Or just append raw data? Let's append raw for now, assuming valid LSF.
                     if (string.IsNullOrEmpty(data) || !IsValidJsonNumber(data))
@@ -163,6 +164,10 @@ namespace Zerox.LSF
                         // What to do if data isn't 'true' or 'false'? Append null?
                         _sb.Append("null"); 
                     }
+                    break;
+                case ValueHint.DateTime:
+                    // DateTime values are kept as strings in JSON
+                    AppendJsonString(data);
                     break;
                 case ValueHint.Null:
                     _sb.Append("null");

@@ -130,7 +130,12 @@ class DOMBuilder:
                 if nodes and nodes[-1].type == TokenType.VALUE:
                     if token.data_length > 0:
                         hint_char = buffer[token.data_start]
-                        nodes[-1].type_hint = ValueHint(hint_char)
+                        # Validate type hint
+                        valid_hints = {ord('n'), ord('f'), ord('b'), ord('d'), ord('s'), ord('z')}
+                        if hint_char in valid_hints:
+                            nodes[-1].type_hint = ValueHint(hint_char)
+                        else:
+                            raise ValueError(f"Invalid type hint '{chr(hint_char)}' at position {token.position}. Valid types are: n, f, b, d, s")
                 else:
                     # Orphaned type hint
                     orphaned_type_hint = (token, len(nodes) - 1)

@@ -156,7 +156,16 @@ export class DOMBuilder {
                     if (typeHintCharPos < this.buffer.length) { 
                          // Check if the hint char itself is part of the next token's marker
                          if (typeHintCharPos < nextTokenPos) {
-                             valueNode.typeHint = this.buffer[typeHintCharPos];
+                             const typeHintByte = this.buffer[typeHintCharPos];
+                             const typeChar = String.fromCharCode(typeHintByte);
+                             
+                             // Validate type hint according to LSF spec
+                             if (typeChar === 'n' || typeChar === 'f' || typeChar === 'b' || 
+                                 typeChar === 'd' || typeChar === 's' || typeChar === 'z') {
+                                 valueNode.typeHint = typeHintByte;
+                             } else {
+                                 throw new Error(`Invalid type hint '${typeChar}' at position ${typeHintCharPos}. Valid types are: n, f, b, d, s`);
+                             }
                          } else {
                              console.warn(`Type hint character position overlaps with next token at index ${i}. Hint ignored.`);
                          }

@@ -130,13 +130,23 @@ namespace Zerox.LSF
                     case 'n':
                         nodeToUpdate.TypeHint = ValueHint.Number;
                         break;
+                    case 'f':
+                        nodeToUpdate.TypeHint = ValueHint.Float;
+                        break;
                     case 'b':
                         nodeToUpdate.TypeHint = ValueHint.Boolean;
+                        break;
+                    case 'd':
+                        nodeToUpdate.TypeHint = ValueHint.DateTime;
+                        break;
+                    case 's':
+                        nodeToUpdate.TypeHint = ValueHint.String;
                         break;
                     case 'z':
                         nodeToUpdate.TypeHint = ValueHint.Null;
                         break;
-                    // default: leave as String
+                    default:
+                        throw new ArgumentException($"Invalid type hint '{(char)hintChar}' at position {nodes[targetNodeIndex].TokenPosition}. Valid types are: n, f, b, d, s");
                 }
             }
             // Update the node in the list
