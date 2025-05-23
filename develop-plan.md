@@ -1,341 +1,122 @@
-# LSF Development Plan - Production Ready
+# LSF Development Plan
 
 ## Overview
-This plan outlines the steps to transform LSF into a production-ready, industrial-strength serialization format with robust implementations across multiple languages.
-
-## CRITICAL DEVELOPMENT RULE
-For EVERY task below, follow this loop:
-1. **CODE** - Write/modify code
-2. **TEST** - Run tests, verify behavior
-3. **FIX** - Fix any issues found
-4. **REPEAT** - Continue until all tests pass
-
-⚠️ **STOP RULE**: If after 3-4 iterations a problem isn't resolved, STOP and ask for help. No workarounds, no skipping tests. The library must work perfectly.
-
-## Phase 0: Critical TypeScript Fix (URGENT)
-### Fix Missing Public API
-- [x] Open `implementations/javascript/src/index.ts` (currently empty!)
-- [x] Export public API matching C# functionality:
-  - [x] `parseLSFToDom(input: string | Uint8Array)`
-  - [x] `parseLSFToJSON(input: string | Uint8Array)`
-  - [x] `encodeLSFToString(data: object, objectName?: string)`
-  - [x] `encodeLSFToArray(data: object, objectName?: string)`
-- [x] Test that npm package exports work correctly
-- [x] CODE → TEST → FIX loop until working
-
-**COMPLETED** ✅ - index.ts now exports full public API. Build succeeds, tests pass.
-**NOTE**: Found encoder bug (999.99 gets `$t~n` instead of `$t~f`) - will fix in Phase 1.
-
-## Phase 1: Fix C# Implementation First
-### Add Missing Tests to C#
-- [x] Add multi-object parsing tests to `DOMBuilderTests.cs`
-  - [x] Test: Sequential objects `$o~Obj1$f~field$v~value$o~Obj2$f~field$v~value`
-  - [x] Test: Multiple anonymous objects
-  - [x] Test: Mixed named and anonymous objects
-  - [x] CODE → TEST → FIX loop until passing
-- [x] Add multi-object tests to `LSFToJSONVisitorTests.cs`
-  - [x] Test: JSON output for multiple objects
-  - [x] Test: Correct array structure for multiple objects
-  - [x] CODE → TEST → FIX loop until passing
-- [x] Add edge case tests
-  - [x] Test: Unicode/UTF-8 characters in values
-  - [x] Test: Very long field names and values
-  - [x] Test: Malformed tokens (partial tokens)
-  - [x] CODE → TEST → FIX loop until passing
-- [x] Verify all existing tests still pass
-- [x] Run full test suite 3 times to ensure stability
-
-### Fix Multi-Object Bug in C# (if found)
-- [x] Run new multi-object tests
-- [x] If failing: Debug and fix the visitor/navigator
-- [x] Ensure fix doesn't break existing functionality
-- [x] CODE → TEST → FIX loop until all tests green
-
-**RESULT**: No bugs found! C# implementation already handles multi-object parsing correctly. All 82 tests pass.
-
-### Extract C# Tests as Reference
-- [x] Document all test cases from C# implementation
-- [x] Create test extraction script or manual process
-- [x] Generate JSON test format from C# tests
-- [x] Validate extracted tests match original behavior
-
-**COMPLETED** ✅ - Tests successfully replicated across all implementations
-
-## Phase 2: Fix TypeScript Implementation
-### Run C# Reference Tests on TypeScript
-- [x] Port multi-object tests to TypeScript
-- [x] Run all tests - identify failures
-- [x] Fix multi-object parsing bug
-  - [x] CODE → TEST → FIX loop
-  - [x] If stuck after 3-4 iterations: STOP, ask for help
-- [x] Ensure all C# test scenarios pass in TypeScript
-- [x] Run full test suite 3 times
-
-**COMPLETED** ✅ - Fixed two bugs:
-1. **Encoder bug**: Float values now correctly get `$t~f` instead of `$t~n`
-2. **Multi-object bug**: Visitor now processes all root objects, returns array for multiple objects
-All 70 tests pass consistently.
-
-## Phase 3: Replicate C# Tests to Other Languages
-### Use C# as the Reference Implementation
-- [x] Document all C# test cases and expected behaviors
-- [x] Create a checklist of all C# tests that must be replicated
-
-### TypeScript Test Replication
-- [x] Manually port each C# test to TypeScript/Vitest
-  - [x] Keep the same test names and structure
-  - [x] Same input data, same expected outputs
-  - [x] CODE → TEST → FIX loop for each test
-- [x] Ensure TypeScript matches C# behavior exactly
-- [x] No JSON files, no complex test infrastructure
-- [x] Just good old-fashioned test copying
-
-### Python Test Replication
-- [x] Manually port each C# test to Python/pytest
-  - [x] Keep the same test names and structure
-  - [x] Same input data, same expected outputs
-  - [x] CODE → TEST → FIX loop for each test
-- [x] Ensure Python matches C# behavior exactly
-
-### Benefits of This Approach
-- [x] No complex infrastructure to maintain
-- [x] Each language uses its native testing idioms
-- [x] Easy to debug in VS Code
-- [x] Clear reference implementation (C#)
-- [x] Simple to understand and extend
-
-**COMPLETED** ✅ - All implementations now have consistent test coverage:
-- C#: 82 tests
-- TypeScript: 70 tests  
-- Python: 58 tests
-Total: 210 tests passing
-
-## Phase 4: Production Readiness ✅
-
-### Critical Error Handling (ALL Languages)
-
-Based on LSF v3.0 specification analysis, we implemented MINIMAL error handling that aligns with the format's philosophy of "fewer errors = fewer mistakes" and "maximum flexibility".
-
-#### Legitimate Error Cases (Per Specification)
-
-1. **Type Code Validation**
-   - [x] Invalid type hints: "Unknown type 'x' at position X. Valid: n,f,b,d,s"
-   - [x] CODE → TEST → FIX loop for all languages
-
-2. **Size Limits (Practical Consideration)**
-   - [x] Maximum input size (10MB default): "Input exceeds maximum size"
-   - [x] Implemented in all languages (C#, TypeScript, Python)
-
-3. **Encoder Validation**
-   - [x] Nested objects already handled in encoder
-   - [x] Consistent error messages across languages
-
-#### NOT Errors (Per LSF Philosophy)
-The following are NOT errors and are handled gracefully:
-- Unknown tokens (e.g., `$x~`) - ignored
-- Incomplete tokens at EOF - ignored
-- Missing values after fields - represents undefined/null
-- Empty field names - allowed by spec
-- Multiple values for same field - creates array (feature)
-- Token sequences in data - LSF tokens chosen to be rare, not prohibited
-
-#### Implementation Summary
-- [x] Minimal error handling implemented
-- [x] Format's forgiving nature maintained
-- [x] Only explicit spec constraints validated
-
-**COMPLETED** ✅ - Added error handling to all implementations:
-- Type code validation (n, f, b, d, s, z only)
-- Size limit validation (10MB default)
-- Error propagation (removed catch-all try blocks)
-- 9 new tests added (3 per language)
-- Total: 219 tests passing
-
-### C# Specific Implementation
-- [x] Add type code validation in DOMBuilder
-- [x] Add size limit validation in LSFParser
-- [x] Add `LSFParserOptions` class for configurable limits
-- [x] Clean up unused imports and linting warnings
-- [ ] Thread safety documentation
-- [ ] NuGet package configuration
-- [ ] XML documentation for all public APIs
-
-### TypeScript Specific Implementation
-- [x] Add type code validation
-- [x] Port size limit validation from C#
-- [x] Add `ParserOptions` interface for configurable limits
-- [x] Clean up unused imports and variables
-- [ ] Add JSDoc for all exports
-- [ ] Create separate entry points for Node/Browser
-
-### Python Specific Implementation
-- [x] Add type code validation
-- [x] Port size limit validation from C#
-- [x] Add `ParserOptions` dataclass for configurable limits
-- [x] Clean up unused imports and variables
-
-### Performance & Security
-- [x] Input size validation (all languages)
-- [x] Type code validation (all languages)
-- [x] Error propagation (all languages)
-- [ ] Document that LSF is forgiving by design
-- [ ] Benchmark minimal error handling overhead
-
-## Phase 5: New Language Implementations
-
-### Python Implementation
-- [x] Create package structure following Python conventions
-- [x] Implement TokenScanner
-- [x] Implement DOMBuilder
-- [x] Implement DOMNavigator
-- [x] Implement Visitor pattern
-- [x] Implement Encoder
-- [x] Add type hints (Python 3.8+)
-- [x] Create pip package configuration
-- [x] Run against unified test suite
-
-**COMPLETED** ✅ - Python implementation complete with 58 passing tests. All components match C# and TypeScript behavior.
-
-### Additional Languages (Priority Order)
-- [ ] Go - for high-performance server applications
-- [ ] Rust - for systems programming
-- [ ] Java - for enterprise applications
-
-## Phase 6: Documentation & Examples
-
-### Core Documentation
-- [x] Update README.md with:
-  - [x] Clear value proposition
-  - [x] Installation instructions for all languages
-  - [x] Quick start examples
-  - [ ] Performance comparisons
-  - [x] Use case scenarios
-- [x] Create CONTRIBUTING.md
-- [x] API documentation for each language
-- [ ] Migration guide from JSON
-
-**PARTIALLY COMPLETED** - README and CONTRIBUTING created with LSF benefits and LLM integration focus
-
-### Example Applications
-- [x] LLM integration example (JSON→LLM→LSF→JSON pipeline)
-- [ ] Streaming data processor
-- [ ] Config file parser
-- [ ] Log structured data example
-
-**COMPLETED** - Comprehensive LLM integration example with Anthropic API
-
-### Tutorials
-- [ ] "Getting Started with LSF"
-- [ ] "Integrating LSF with OpenAI/Anthropic APIs"
-- [ ] "Building fault-tolerant LLM pipelines"
-- [ ] "Performance optimization tips"
-
-## Phase 7: CI/CD & Release Process
-
-### GitHub Actions
-- [ ] Build matrix for all languages
-- [ ] Run unified test suite
-- [ ] Code coverage reporting
-- [ ] Benchmark regression detection
-- [ ] Security scanning
-- [ ] Auto-generate release notes
-
-### Release Process
-- [ ] Semantic versioning strategy
-- [ ] Automated package publishing:
-  - [ ] NuGet for C#
-  - [ ] npm for TypeScript
-  - [ ] PyPI for Python
-- [ ] GitHub releases with binaries
-- [ ] Change log generation
-- [ ] Version compatibility matrix
-
-## Phase 8: Community & Ecosystem
-
-### Community Building
-- [ ] Create Discord/Slack channel
-- [ ] Add GitHub issue templates
-- [ ] Create discussion forum
-- [ ] Regular release cycle
-
-### Ecosystem Tools
-- [ ] Online LSF playground
-- [ ] VS Code extension for LSF syntax
-- [ ] CLI tools for LSF↔JSON conversion
-- [ ] Integration libraries for popular frameworks
-
-## Success Metrics
-- [ ] All implementations pass 100% of test suite
-- [ ] <5ms parsing time for 1MB documents
-- [ ] Zero security vulnerabilities
-- [ ] Published packages for C#, TypeScript, Python
-- [ ] 95%+ code coverage
-- [ ] Documentation coverage for all public APIs
-- [ ] **Developer adoption metrics:**
-  - [ ] 1000+ npm downloads/month
-  - [ ] 500+ NuGet downloads/month
-  - [ ] Active community engagement
-  - [ ] Real-world usage examples shared
+Transform LSF into a production-ready serialization format with robust implementations across multiple languages.
 
 ## Development Principles
-1. **Perfect Working Library** - No shortcuts, no workarounds
-2. **Test-Driven** - Write tests first, then code
-3. **Stop When Stuck** - After 3-4 iterations without progress, ask for help
-4. **C# as Reference** - C# implementation defines expected behavior
-5. **Incremental Progress** - Complete each phase fully before moving on
+1. **CODE → TEST → FIX** - Always follow this loop
+2. **Stop When Stuck** - After 3-4 iterations without progress, ask for help
+3. **No Workarounds** - The library must work perfectly
 
-## Timeline Estimate
-- Phase 1: 3-4 days (C# fixes and comprehensive tests)
-- Phase 2: 2-3 days (TypeScript fixes)
-- Phase 3: 3-4 days (Unified test suite)
-- Phase 4: 1-2 weeks (Production readiness)
-- Phase 5: 2-3 weeks (New languages)
-- Phase 6-7: 1-2 weeks (Documentation and CI/CD)
-- Phase 8: Ongoing
+## What's Done ✅
 
-Total: ~6-8 weeks for production-ready status
+### Implementations Complete
+- **C# (Reference)**: 85 tests, all features implemented
+- **TypeScript**: 73 tests, fixed encoder & multi-object bugs  
+- **Python**: 61 tests, all features implemented
+- **Total**: 219+ tests passing
 
-## Current Status (Updated)
+### Features Implemented
+- Core parsing and encoding
+- Multi-object support
+- Type hints (n, f, b, d, s, z)
+- Minimal error handling (type validation, size limits)
+- Configurable parser options
+- LLM prompt functions (GetLLMPrompt/getLLMPrompt/get_llm_prompt)
+- Prompt generation from single source
+- LLM integration tests with Claude API
 
-### ✅ Completed Phases:
-- **Phase 0**: TypeScript public API fixed
-- **Phase 1**: C# comprehensive testing (85 tests)
-- **Phase 2**: TypeScript bug fixes (encoder & multi-object) (73 tests)
-- **Phase 3**: Test replication across languages
-- **Phase 4**: Production readiness - minimal error handling (219 tests total)
-- **Phase 5**: API documentation (XML docs for C#, JSDoc for TypeScript)
-- **Phase 5**: Python implementation (61 tests)
-- **Phase 6**: Basic documentation (README & CONTRIBUTING)
+### Documentation Created
+- README.md with value proposition
+- CONTRIBUTING.md
+- LSF v3.0 specification
+- Basic API documentation
+- LLM integration examples
 
-### 🔄 In Progress:
-- **Phase 6**: Documentation and examples
-  - ✅ LLM integration example with real-world testing
-  - ✅ getLLMPrompt() added to TypeScript library
-  - ⏳ GetLLMPrompt() needed for C# library
-  - ⏳ get_llm_prompt() needed for Python library
+## Current Phase: Repository Reorganization
 
-### 📋 Remaining:
-- **Phase 4**: Documentation (thread safety, XML docs, JSDoc)
-- **Phase 6**: Complete documentation & examples
-- **Phase 7**: CI/CD setup
-- **Phase 8**: Community building
-- Additional language implementations (Go, Rust, Java)
+### Issues to Fix
+1. **Scattered Tests**
+   - `examples/llm-integration/` outside implementations
+   - Python tests in root directory
+   - No clear unit vs integration separation
 
-### 📊 Test Coverage:
-- Total: 219 tests passing
-- C#: 85 tests
-- TypeScript: 73 tests
-- Python: 61 tests
+2. **Non-Standard Structure**
+   - Python missing `src/` directory and `__main__.py`
+   - Documentation fragmented across multiple READMEs
+   - Examples directory with non-runnable code
 
-### 🎯 Recent Accomplishments:
-- ✅ Cleaned up all linting warnings and unused imports
-- ✅ Added configurable parser options (size limits, type validation)
-- ✅ Maintained backward compatibility
-- ✅ All tests passing after refactoring
+3. **Documentation Gaps**
+   - Need comprehensive README per language
+   - Examples should be in docs, not separate files
+
+### Target Structure
+```
+lsf/
+├── README.md                    # Quick overview & examples
+├── CONTRIBUTING.md              
+├── LICENSE                      
+├── CHANGELOG.md                 # NEW
+├── docs/
+│   ├── SPECIFICATION_v3.md      
+│   └── BENCHMARKS.md           # NEW
+├── implementations/
+│   ├── prompt-gen/             # ONLY shared component
+│   ├── javascript/
+│   │   ├── README.md           # Complete guide
+│   │   ├── src/
+│   │   ├── tests/
+│   │   │   ├── unit/
+│   │   │   └── integration/llm/
+│   │   └── benchmarks/
+│   ├── csharp/
+│   │   ├── README.md           # Complete guide
+│   │   └── Zerox.LSF/
+│   │       ├── Zerox.LSF/
+│   │       ├── Zerox.LSF.Tests/
+│   │       ├── Zerox.LSF.Integration/
+│   │       └── Zerox.LSF.Benchmarks/
+│   └── python/
+│       ├── README.md           # Complete guide
+│       ├── src/lsf/            # Move from root
+│       ├── tests/
+│       │   ├── unit/
+│       │   └── integration/llm/
+│       └── benchmarks/
+└── scripts/                    # Optional utilities
+```
+
+### Reorganization Tasks
+- [ ] Move integration tests to language directories
+- [ ] Standardize Python structure (src/lsf)
+- [ ] Create comprehensive README per language
+- [ ] Remove examples directory
+- [ ] Clean up scattered test files
+
+## Remaining Phases
+
+### Package Publishing
+- [ ] Finalize API surface
+- [ ] Create package configurations (package.json, pyproject.toml, .csproj)
+- [ ] Publish to npm, PyPI, NuGet
+
+### CI/CD Pipeline
+- [ ] GitHub Actions for testing
+- [ ] Automated package publishing
+- [ ] Coverage reporting
+
+### Performance & Benchmarks
+- [ ] Benchmark against JSON
+- [ ] Document performance characteristics
+- [ ] Optimization if needed
+
+### Future Considerations
+- Additional languages (Go, Rust, Java)
+- VS Code extension
+- Streaming support
 
 ## Next Steps
-1. Add API documentation (XML docs for C#, JSDoc for TypeScript)
-2. Complete Phase 6: Finish documentation and create examples
-3. Phase 7: Set up CI/CD pipeline
-4. Create package releases (NuGet, npm, PyPI)
-5. Performance benchmarks and optimization
+1. Execute repository reorganization
+2. Publish packages
+3. Set up CI/CD
+4. Create benchmarks
