@@ -15,12 +15,20 @@ namespace Zerox.LSF
         private static readonly byte[] ValueTokenBytes = Encoding.UTF8.GetBytes("$v~");
         private static readonly byte[] TypeHintTokenBytes = Encoding.UTF8.GetBytes("$t~");
 
-        // Placeholder for the token information we'll store
-        // We might refine this structure later (e.g., use a struct for performance)
+        /// <summary>
+        /// Information about a scanned token.
+        /// </summary>
         public struct TokenInfo
         {
+            /// <summary>
+            /// The type of token found.
+            /// </summary>
             public TokenType Type { get; set; }
-            public int Position { get; set; } // Start position of the token in the input span
+            
+            /// <summary>
+            /// The starting position of the token in the input buffer.
+            /// </summary>
+            public int Position { get; set; }
         }
 
         /// <summary>
