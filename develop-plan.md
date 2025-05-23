@@ -14,39 +14,44 @@ For EVERY task below, follow this loop:
 
 ## Phase 0: Critical TypeScript Fix (URGENT)
 ### Fix Missing Public API
-- [ ] Open `implementations/javascript/src/index.ts` (currently empty!)
-- [ ] Export public API matching C# functionality:
-  - [ ] `parseLSFToDom(input: string | Uint8Array)`
-  - [ ] `parseLSFToJSON(input: string | Uint8Array)`
-  - [ ] `encodeLSFToString(data: object, objectName?: string)`
-  - [ ] `encodeLSFToArray(data: object, objectName?: string)`
-- [ ] Test that npm package exports work correctly
-- [ ] CODE → TEST → FIX loop until working
+- [x] Open `implementations/javascript/src/index.ts` (currently empty!)
+- [x] Export public API matching C# functionality:
+  - [x] `parseLSFToDom(input: string | Uint8Array)`
+  - [x] `parseLSFToJSON(input: string | Uint8Array)`
+  - [x] `encodeLSFToString(data: object, objectName?: string)`
+  - [x] `encodeLSFToArray(data: object, objectName?: string)`
+- [x] Test that npm package exports work correctly
+- [x] CODE → TEST → FIX loop until working
+
+**COMPLETED** ✅ - index.ts now exports full public API. Build succeeds, tests pass.
+**NOTE**: Found encoder bug (999.99 gets `$t~n` instead of `$t~f`) - will fix in Phase 1.
 
 ## Phase 1: Fix C# Implementation First
 ### Add Missing Tests to C#
-- [ ] Add multi-object parsing tests to `DOMBuilderTests.cs`
-  - [ ] Test: Sequential objects `$o~Obj1$f~field$v~value$o~Obj2$f~field$v~value`
-  - [ ] Test: Multiple anonymous objects
-  - [ ] Test: Mixed named and anonymous objects
-  - [ ] CODE → TEST → FIX loop until passing
-- [ ] Add multi-object tests to `LSFToJSONVisitorTests.cs`
-  - [ ] Test: JSON output for multiple objects
-  - [ ] Test: Correct array structure for multiple objects
-  - [ ] CODE → TEST → FIX loop until passing
-- [ ] Add edge case tests
-  - [ ] Test: Unicode/UTF-8 characters in values
-  - [ ] Test: Very long field names and values
-  - [ ] Test: Malformed tokens (partial tokens)
-  - [ ] CODE → TEST → FIX loop until passing
-- [ ] Verify all existing tests still pass
-- [ ] Run full test suite 3 times to ensure stability
+- [x] Add multi-object parsing tests to `DOMBuilderTests.cs`
+  - [x] Test: Sequential objects `$o~Obj1$f~field$v~value$o~Obj2$f~field$v~value`
+  - [x] Test: Multiple anonymous objects
+  - [x] Test: Mixed named and anonymous objects
+  - [x] CODE → TEST → FIX loop until passing
+- [x] Add multi-object tests to `LSFToJSONVisitorTests.cs`
+  - [x] Test: JSON output for multiple objects
+  - [x] Test: Correct array structure for multiple objects
+  - [x] CODE → TEST → FIX loop until passing
+- [x] Add edge case tests
+  - [x] Test: Unicode/UTF-8 characters in values
+  - [x] Test: Very long field names and values
+  - [x] Test: Malformed tokens (partial tokens)
+  - [x] CODE → TEST → FIX loop until passing
+- [x] Verify all existing tests still pass
+- [x] Run full test suite 3 times to ensure stability
 
 ### Fix Multi-Object Bug in C# (if found)
-- [ ] Run new multi-object tests
-- [ ] If failing: Debug and fix the visitor/navigator
-- [ ] Ensure fix doesn't break existing functionality
-- [ ] CODE → TEST → FIX loop until all tests green
+- [x] Run new multi-object tests
+- [x] If failing: Debug and fix the visitor/navigator
+- [x] Ensure fix doesn't break existing functionality
+- [x] CODE → TEST → FIX loop until all tests green
+
+**RESULT**: No bugs found! C# implementation already handles multi-object parsing correctly. All 82 tests pass.
 
 ### Extract C# Tests as Reference
 - [ ] Document all test cases from C# implementation

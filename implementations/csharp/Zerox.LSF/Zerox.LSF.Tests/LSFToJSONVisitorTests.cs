@@ -150,5 +150,41 @@ namespace Zerox.LSF.Tests
             string? actualJson = ConvertLsfToJson(lsf);
             Assert.Equal(NormalizeJson(expectedJson), NormalizeJson(actualJson));
         }
+
+        // Multi-object JSON tests
+        [Fact]
+        public void ToJsonString_MultipleObjects_ReturnsArrayOfObjects()
+        {
+            string lsf = "$o~user1$f~name$v~Alice$f~age$v~25$t~n$o~user2$f~name$v~Bob$f~age$v~30$t~n";
+            // Multiple root objects should be wrapped in an array
+            string expectedJson = "[{\"name\":\"Alice\",\"age\":25},{\"name\":\"Bob\",\"age\":30}]";
+            string? actualJson = ConvertLsfToJson(lsf);
+            Assert.Equal(NormalizeJson(expectedJson), NormalizeJson(actualJson));
+        }
+
+        [Fact]
+        public void ToJsonString_MultipleAnonymousObjects_ReturnsArrayOfObjects()
+        {
+            string lsf = "$o~$f~type$v~first$o~$f~type$v~second$o~$f~type$v~third";
+            string expectedJson = "[{\"type\":\"first\"},{\"type\":\"second\"},{\"type\":\"third\"}]";
+            string? actualJson = ConvertLsfToJson(lsf);
+            Assert.Equal(NormalizeJson(expectedJson), NormalizeJson(actualJson));
+        }
+
+        [Fact]
+        public void ToJsonString_SingleObjectAfterMultiple_StillWorksCorrectly()
+        {
+            // First parse multiple objects
+            string lsfMulti = "$o~$f~id$v~1$t~n$o~$f~id$v~2$t~n";
+            string expectedMulti = "[{\"id\":1},{\"id\":2}]";
+            string? actualMulti = ConvertLsfToJson(lsfMulti);
+            Assert.Equal(NormalizeJson(expectedMulti), NormalizeJson(actualMulti));
+
+            // Then parse single object - should not be affected by previous parsing
+            string lsfSingle = "$o~single$f~name$v~Solo";
+            string expectedSingle = "{\"name\":\"Solo\"}";
+            string? actualSingle = ConvertLsfToJson(lsfSingle);
+            Assert.Equal(NormalizeJson(expectedSingle), NormalizeJson(actualSingle));
+        }
     }
 } 

@@ -337,5 +337,191 @@ namespace Zerox.LSF.Tests
             Assert.Equal(ValueHint.Number, nodes[4].TypeHint); // Hint applied
 
         }
+
+        // Multi-object parsing tests
+        [Fact]
+        public void Build_SequentialObjects_ParsesBothObjects()
+        {
+            string lsf = "$o~Obj1$f~field$v~value1$o~Obj2$f~field$v~value2";
+            var result = BuildDom(lsf);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.Nodes);
+            var nodes = result.Nodes!;
+            Assert.Equal(6, nodes.Count); // 2 objects, 2 fields, 2 values
+
+            // First object - Obj1
+            var obj1 = nodes[0];
+            Assert.Equal(TokenType.Object, obj1.Type);
+            Assert.Equal(-1, obj1.ParentIndex); // Root level
+            Assert.Equal("Obj1", GetData(obj1, lsf));
+            Assert.Single(obj1.ChildrenIndices);
+            Assert.Contains(1, obj1.ChildrenIndices);
+
+            // First field
+            var field1 = nodes[1];
+            Assert.Equal(TokenType.Field, field1.Type);
+            Assert.Equal(0, field1.ParentIndex);
+            Assert.Equal("field", GetData(field1, lsf));
+
+            // First value
+            var value1 = nodes[2];
+            Assert.Equal(TokenType.Value, value1.Type);
+            Assert.Equal(1, value1.ParentIndex);
+            Assert.Equal("value1", GetData(value1, lsf));
+
+            // Second object - Obj2
+            var obj2 = nodes[3];
+            Assert.Equal(TokenType.Object, obj2.Type);
+            Assert.Equal(-1, obj2.ParentIndex); // Root level
+            Assert.Equal("Obj2", GetData(obj2, lsf));
+            Assert.Single(obj2.ChildrenIndices);
+            Assert.Contains(4, obj2.ChildrenIndices);
+
+            // Second field
+            var field2 = nodes[4];
+            Assert.Equal(TokenType.Field, field2.Type);
+            Assert.Equal(3, field2.ParentIndex);
+            Assert.Equal("field", GetData(field2, lsf));
+
+            // Second value
+            var value2 = nodes[5];
+            Assert.Equal(TokenType.Value, value2.Type);
+            Assert.Equal(4, value2.ParentIndex);
+            Assert.Equal("value2", GetData(value2, lsf));
+        }
+
+        [Fact]
+        public void Build_MultipleAnonymousObjects_ParsesAll()
+        {
+            string lsf = "$o~$f~name$v~Alice$o~$f~name$v~Bob$o~$f~name$v~Charlie";
+            var result = BuildDom(lsf);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.Nodes);
+            var nodes = result.Nodes!;
+            Assert.Equal(9, nodes.Count); // 3 objects, 3 fields, 3 values
+
+            // Verify all three objects are at root level
+            var rootObjects = nodes.Where(n => n.Type == TokenType.Object && n.ParentIndex == -1).ToList();
+            Assert.Equal(3, rootObjects.Count);
+
+            // Verify each object has correct structure
+            for (int i = 0; i < 3; i++)
+            {
+                var objIndex = i * 3;
+                var obj = nodes[objIndex];
+                Assert.Equal(TokenType.Object, obj.Type);
+                Assert.Equal(-1, obj.ParentIndex);
+                Assert.Equal(0, obj.DataLength); // Anonymous
+
+                var field = nodes[objIndex + 1];
+                Assert.Equal(TokenType.Field, field.Type);
+                Assert.Equal(objIndex, field.ParentIndex);
+                Assert.Equal("name", GetData(field, lsf));
+
+                var value = nodes[objIndex + 2];
+                Assert.Equal(TokenType.Value, value.Type);
+                Assert.Equal(objIndex + 1, value.ParentIndex);
+            }
+
+            // Verify specific values
+            Assert.Equal("Alice", GetData(nodes[2], lsf));
+            Assert.Equal("Bob", GetData(nodes[5], lsf));
+            Assert.Equal("Charlie", GetData(nodes[8], lsf));
+        }
+
+        [Fact]
+        public void Build_MixedNamedAndAnonymousObjects_ParsesAll()
+        {
+            string lsf = "$o~Named1$f~type$v~named$o~$f~type$v~anonymous$o~Named2$f~type$v~named";
+            var result = BuildDom(lsf);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.Nodes);
+            var nodes = result.Nodes!;
+            Assert.Equal(9, nodes.Count);
+
+            // First named object
+            Assert.Equal("Named1", GetData(nodes[0], lsf));
+            Assert.Equal(6, nodes[0].DataLength); // "Named1" is 6 characters
+
+            // Anonymous object
+            Assert.Equal(0, nodes[3].DataLength);
+            Assert.Equal(TokenType.Object, nodes[3].Type);
+            Assert.Equal(-1, nodes[3].ParentIndex);
+
+            // Second named object
+            Assert.Equal("Named2", GetData(nodes[6], lsf));
+            
+            // Verify all have correct values
+            Assert.Equal("named", GetData(nodes[2], lsf));
+            Assert.Equal("anonymous", GetData(nodes[5], lsf));
+            Assert.Equal("named", GetData(nodes[8], lsf));
+        }
+
+        // Edge case tests
+        [Fact]
+        public void Build_UnicodeCharactersInValues_HandledCorrectly()
+        {
+            string lsf = "$o~测试$f~名称$v~Hello 世界 🌍$f~emoji$v~😀🎉";
+            var result = BuildDom(lsf);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.Nodes);
+            var nodes = result.Nodes!;
+            
+            // Verify Unicode object name
+            Assert.Equal("测试", GetData(nodes[0], lsf));
+            
+            // Verify Unicode field name
+            Assert.Equal("名称", GetData(nodes[1], lsf));
+            
+            // Verify mixed Unicode value
+            Assert.Equal("Hello 世界 🌍", GetData(nodes[2], lsf));
+            
+            // Verify emoji value
+            Assert.Equal("😀🎉", GetData(nodes[4], lsf));
+        }
+
+        [Fact]
+        public void Build_VeryLongFieldNamesAndValues_HandledCorrectly()
+        {
+            string longFieldName = new string('a', 1000);
+            string longValue = new string('b', 5000);
+            string lsf = $"$o~LongTest$f~{longFieldName}$v~{longValue}";
+            
+            var result = BuildDom(lsf);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.Nodes);
+            var nodes = result.Nodes!;
+            
+            // Verify long field name
+            Assert.Equal(longFieldName, GetData(nodes[1], lsf));
+            Assert.Equal(1000, nodes[1].DataLength);
+            
+            // Verify long value
+            Assert.Equal(longValue, GetData(nodes[2], lsf));
+            Assert.Equal(5000, nodes[2].DataLength);
+        }
+
+        [Fact]
+        public void Build_MalformedTokens_IgnoredGracefully()
+        {
+            // Partial tokens inside values are treated as literal text
+            string lsf = "$o~Valid$f~field$v~value$o";  // $o inside value
+            var result = BuildDom(lsf);
+
+            Assert.True(result.Success);
+            Assert.NotNull(result.Nodes);
+            var nodes = result.Nodes!;
+            Assert.Equal(3, nodes.Count); // Object/field/value
+
+            // Verify structure
+            Assert.Equal("Valid", GetData(nodes[0], lsf));
+            Assert.Equal("field", GetData(nodes[1], lsf));
+            Assert.Equal("value$o", GetData(nodes[2], lsf)); // $o is part of the value
+        }
     }
 } 
