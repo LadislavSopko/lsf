@@ -158,6 +158,8 @@ export { encodeLSFToString, encodeLSFToArray };
  * @param {boolean} [options.includeExample=true] - Include an example in the prompt
  * @param {'minimal'|'detailed'} [options.style='minimal'] - Prompt style
  * @returns {string} LLM prompt for LSF generation
+ * @remarks The prompts returned by this function are defined in docs/LLM_PROMPT.md
+ * to ensure consistency across all language implementations.
  * @example
  * const prompt = getLLMPrompt();
  * const fullPrompt = `${prompt}\n\nConvert this data: ${JSON.stringify(data)}`;

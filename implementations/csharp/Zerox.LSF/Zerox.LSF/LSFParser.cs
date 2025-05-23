@@ -134,5 +134,66 @@ namespace Zerox.LSF
         }
 
         #endregion
+
+        #region LLM Integration
+
+        /// <summary>
+        /// Gets a prompt for instructing LLMs to generate LSF format.
+        /// </summary>
+        /// <param name="includeExample">Whether to include an example in the prompt. Default is true.</param>
+        /// <param name="style">The style of prompt to generate. "minimal" or "detailed". Default is "minimal".</param>
+        /// <returns>A prompt string for LLM LSF generation.</returns>
+        /// <remarks>
+        /// The prompts returned by this method are defined in docs/LLM_PROMPT.md
+        /// to ensure consistency across all language implementations.
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// var prompt = LSFParser.GetLLMPrompt();
+        /// var fullPrompt = $"{prompt}\n\nConvert this data: {JsonSerializer.Serialize(data)}";
+        /// </code>
+        /// </example>
+        public static string GetLLMPrompt(bool includeExample = true, string style = "minimal")
+        {
+            if (style == "detailed")
+            {
+                return @"Generate output in LSF (LLM-Safe Format):
+
+TOKENS:
+- $o~ = start object
+- $f~ = field name follows
+- $v~ = value follows  
+- $t~ = type hint follows (single character)
+
+TYPES:
+- n = integer (e.g., 42)
+- f = float (e.g., 3.14)
+- b = boolean (true/false)
+- d = datetime (ISO format)
+- s = string (optional, default)
+- z = null
+
+RULES:
+1. NO quotes, brackets, or commas anywhere
+2. NO newlines between tokens (continuous stream)
+3. Arrays: repeat $v~ for same field
+4. Multi-line strings: write actual newlines, not \n
+5. Write all special characters as-is
+6. NO escaping - write everything literally" +
+(includeExample ? @"
+
+EXAMPLE:
+$o~$f~name$v~John Doe$f~age$v~30$t~n$f~active$v~true$t~b$f~tags$v~admin$v~user" : "");
+            }
+
+            // Minimal style (default)
+            return @"Output in LSF format:
+$o~=object, $f~=field, $v~=value, $t~=type(n=int,f=float,b=bool,d=date,z=null)
+NO quotes/brackets. Arrays: repeat $v~. Continuous line." + 
+(includeExample ? @"
+Example: $o~$f~name$v~John$f~age$v~30$t~n$f~tags$v~a$v~b" : "");
+        }
+
+        #endregion
     }
 } 
