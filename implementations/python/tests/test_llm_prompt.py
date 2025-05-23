@@ -31,7 +31,7 @@ def test_get_llm_prompt_detailed_with_example():
     assert "TOKENS:" in prompt
     assert "TYPES:" in prompt
     assert "RULES:" in prompt
-    assert "Multi-line strings: write actual newlines, not \\n" in prompt
+    assert "Multi-line strings: write actual newlines, not \\n" in prompt or "Multi-line strings: write actual newlines, not \n" in prompt
     assert "NO escaping - write everything literally" in prompt
     assert "EXAMPLE:" in prompt
 

@@ -1,0 +1,11 @@
+{
+  "name": "lsf-prompt-generator",
+  "version": "1.0.0",
+  "description": "Generate LLM prompt files for all LSF implementations",
+  "main": "generate.js",
+  "scripts": {
+    "generate": "node generate.js"
+  },
+  "keywords": ["lsf", "code-generation"],
+  "license": "MIT"
+}

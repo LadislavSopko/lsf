@@ -27,6 +27,7 @@ import { LSFToJSONVisitor } from './parser/visitor';
 import { encodeLSFToString, encodeLSFToArray } from './parser/encoder';
 import type { ParseResult } from './parser/types';
 import { ParserOptions, mergeOptions } from './parser/parser-options';
+import { getPromptText } from './llm-prompts';
 
 // Re-export types
 export type { LSFNode, ParseResult, TokenInfo, DOMNavigator } from './parser/types';
@@ -171,38 +172,7 @@ export function getLLMPrompt(options?: {
   const includeExample = options?.includeExample ?? true;
   const style = options?.style ?? 'minimal';
   
-  if (style === 'detailed') {
-    return `Generate output in LSF (LLM-Safe Format):
-
-TOKENS:
-- $o~ = start object
-- $f~ = field name follows
-- $v~ = value follows  
-- $t~ = type hint follows (single character)
-
-TYPES:
-- n = integer (e.g., 42)
-- f = float (e.g., 3.14)
-- b = boolean (true/false)
-- d = datetime (ISO format)
-- s = string (optional, default)
-- z = null
-
-RULES:
-1. NO quotes, brackets, or commas anywhere
-2. NO newlines between tokens (continuous stream)
-3. Arrays: repeat $v~ for same field
-4. Multi-line strings: write actual newlines, not \\n
-5. Write all special characters as-is
-6. NO escaping - write everything literally
-
-${includeExample ? 'EXAMPLE:\n$o~$f~name$v~John Doe$f~age$v~30$t~n$f~active$v~true$t~b$f~tags$v~admin$v~user' : ''}`;
-  }
-  
-  // Minimal style (default)
-  return `Output in LSF format:
-$o~=object, $f~=field, $v~=value, $t~=type(n=int,f=float,b=bool,d=date,z=null)
-NO quotes/brackets. Arrays: repeat $v~. Continuous line.${includeExample ? '\nExample: $o~$f~name$v~John$f~age$v~30$t~n$f~tags$v~a$v~b' : ''}`;
+  return getPromptText(includeExample, style);
 }
 
 /**

@@ -1,5 +1,5 @@
 """LSF (LLM-Safe Format) Python implementation."""
-from typing import Union, Optional, List, Dict, Any
+from typing import Union, Optional, Any
 
 from .parser.token_scanner import TokenScanner
 from .parser.dom_builder import DOMBuilder
@@ -118,53 +118,15 @@ def get_llm_prompt(include_example: bool = True, style: str = "minimal") -> str:
         A prompt string for LLM LSF generation.
         
     Note:
-        The prompts returned by this function are defined in docs/LLM_PROMPT.md
+        The prompts are generated from prompt-gen/prompts.json
         to ensure consistency across all language implementations.
         
     Example:
         prompt = get_llm_prompt()
         full_prompt = f"{prompt}\n\nConvert this data: {json.dumps(data)}"
     """
-    if style == "detailed":
-        prompt = """Generate output in LSF (LLM-Safe Format):
-
-TOKENS:
-- $o~ = start object
-- $f~ = field name follows
-- $v~ = value follows  
-- $t~ = type hint follows (single character)
-
-TYPES:
-- n = integer (e.g., 42)
-- f = float (e.g., 3.14)
-- b = boolean (true/false)
-- d = datetime (ISO format)
-- s = string (optional, default)
-- z = null
-
-RULES:
-1. NO quotes, brackets, or commas anywhere
-2. NO newlines between tokens (continuous stream)
-3. Arrays: repeat $v~ for same field
-4. Multi-line strings: write actual newlines, not \\n
-5. Write all special characters as-is
-6. NO escaping - write everything literally"""
-        
-        if include_example:
-            prompt += """\n\nEXAMPLE:
-$o~$f~name$v~John Doe$f~age$v~30$t~n$f~active$v~true$t~b$f~tags$v~admin$v~user"""
-            
-        return prompt
-    
-    # Minimal style (default)
-    prompt = """Output in LSF format:
-$o~=object, $f~=field, $v~=value, $t~=type(n=int,f=float,b=bool,d=date,z=null)
-NO quotes/brackets. Arrays: repeat $v~. Continuous line."""
-    
-    if include_example:
-        prompt += "\nExample: $o~$f~name$v~John$f~age$v~30$t~n$f~tags$v~a$v~b"
-        
-    return prompt
+    from .llm_prompts import get_prompt_text
+    return get_prompt_text(include_example, style)
 
 
 # Public API
