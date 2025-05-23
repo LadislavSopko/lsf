@@ -153,6 +153,57 @@ export const encodeToArray = encodeLSFToArray;
 export { encodeLSFToString, encodeLSFToArray };
 
 /**
+ * Get a prompt for instructing LLMs to generate LSF format
+ * @param {Object} [options] - Prompt generation options
+ * @param {boolean} [options.includeExample=true] - Include an example in the prompt
+ * @param {'minimal'|'detailed'} [options.style='minimal'] - Prompt style
+ * @returns {string} LLM prompt for LSF generation
+ * @example
+ * const prompt = getLLMPrompt();
+ * const fullPrompt = `${prompt}\n\nConvert this data: ${JSON.stringify(data)}`;
+ */
+export function getLLMPrompt(options?: { 
+  includeExample?: boolean; 
+  style?: 'minimal' | 'detailed';
+}): string {
+  const includeExample = options?.includeExample ?? true;
+  const style = options?.style ?? 'minimal';
+  
+  if (style === 'detailed') {
+    return `Generate output in LSF (LLM-Safe Format):
+
+TOKENS:
+- $o~ = start object
+- $f~ = field name follows
+- $v~ = value follows  
+- $t~ = type hint follows (single character)
+
+TYPES:
+- n = integer (e.g., 42)
+- f = float (e.g., 3.14)
+- b = boolean (true/false)
+- d = datetime (ISO format)
+- s = string (optional, default)
+- z = null
+
+RULES:
+1. NO quotes, brackets, or commas anywhere
+2. NO newlines between tokens (continuous stream)
+3. Arrays: repeat $v~ for same field
+4. Multi-line strings: write actual newlines, not \\n
+5. Write all special characters as-is
+6. NO escaping - write everything literally
+
+${includeExample ? 'EXAMPLE:\n$o~$f~name$v~John Doe$f~age$v~30$t~n$f~active$v~true$t~b$f~tags$v~admin$v~user' : ''}`;
+  }
+  
+  // Minimal style (default)
+  return `Output in LSF format:
+$o~=object, $f~=field, $v~=value, $t~=type(n=int,f=float,b=bool,d=date,z=null)
+NO quotes/brackets. Arrays: repeat $v~. Continuous line.${includeExample ? '\nExample: $o~$f~name$v~John$f~age$v~30$t~n$f~tags$v~a$v~b' : ''}`;
+}
+
+/**
  * Default export containing all LSF functions
  * @namespace LSF
  */
@@ -168,5 +219,7 @@ export default {
   /** Encode JavaScript object to LSF string */
   encodeToString: encodeLSFToString,
   /** Encode JavaScript object to LSF byte array */
-  encodeToArray: encodeLSFToArray
+  encodeToArray: encodeLSFToArray,
+  /** Get LLM prompt for LSF generation */
+  getLLMPrompt
 };

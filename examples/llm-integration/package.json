@@ -1,0 +1,21 @@
+{
+  "name": "lsf-llm-integration-example",
+  "version": "1.0.0",
+  "description": "Real-world LLM integration example comparing JSON, XML, and LSF formats",
+  "scripts": {
+    "compare": "node compare-formats.js",
+    "test-json": "node test-single-format.js json",
+    "test-xml": "node test-single-format.js xml",
+    "test-lsf": "node test-single-format.js lsf"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "lsf-format": "file:../../implementations/javascript",
+    "xml2js": "^0.6.2",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
