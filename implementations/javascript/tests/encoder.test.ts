@@ -16,7 +16,7 @@ describe('LSF 3.0 Encoder', () => {
         {
             name: 'Object with various types',
             input: { score: 123.45, isAdmin: false, notes: 'Testing', details: null },
-            expectedString: '$o~$f~score$v~123.45$t~n$f~isAdmin$v~false$t~b$f~notes$v~Testing$f~details$v~null$t~z',
+            expectedString: '$o~$f~score$v~123.45$t~f$f~isAdmin$v~false$t~b$f~notes$v~Testing$f~details$v~null$t~z',
         },
         {
             name: 'Implicit Array (Array of Objects)',
@@ -59,6 +59,18 @@ describe('LSF 3.0 Encoder', () => {
             // Also verify string decoding matches
             expect(textDecoder.decode(encodeLSFToArray(input))).toBe(expectedString);
         });
+    });
+
+    // Bug test: float values should get $t~f not $t~n
+    it('should use correct type hint for float values', () => {
+        const input = { price: 999.99, count: 100 };
+        const result = encodeLSFToString(input);
+        
+        // price (999.99) should have $t~f for float
+        expect(result).toContain('$f~price$v~999.99$t~f');
+        
+        // count (100) should have $t~n for integer
+        expect(result).toContain('$f~count$v~100$t~n');
     });
 
     describe('Error Handling', () => {

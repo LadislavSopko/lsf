@@ -45,18 +45,29 @@ export class LSFToJSONVisitor implements Visitor {
 
   // Public entry point to start traversal from the root
   buildJSON(): string {
-      if (this.parseResult.root === -1) {
-          // Handle case with no root object (e.g., empty input or only implicit nodes)
-          // Maybe return "{}" or handle based on topLevelNodeIndices? 
-          // For now, assume implicit nodes result in an object wrapper.
-          console.warn("ParseResult has no root object index. Attempting implicit build.");
-          // TODO: Add logic to handle multiple top-level / implicit objects if needed.
-          // If topLevelNodeIndices exists and is populated, iterate through them.
-          // Currently builder sets root to first top-level object, so start there.
-          return "{}"; // Placeholder
+      // Get all root indices to handle multiple objects
+      const rootIndices = this.navigator.getRootIndices();
+      
+      if (rootIndices.length === 0) {
+          // No root objects found
+          return "{}";
       }
-      // Start traversal from the root node
-      this.visit(this.parseResult.root);
+      
+      if (rootIndices.length === 1) {
+          // Single root object - return as single JSON object
+          this.visit(rootIndices[0]);
+          return this.getResult();
+      }
+      
+      // Multiple root objects - return as JSON array
+      this.result.append('[');
+      for (let i = 0; i < rootIndices.length; i++) {
+          if (i > 0) {
+              this.result.append(',');
+          }
+          this.visit(rootIndices[i]);
+      }
+      this.result.append(']');
       return this.getResult();
   }
   

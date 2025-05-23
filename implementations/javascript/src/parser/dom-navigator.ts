@@ -70,6 +70,30 @@ export class DOMNavigator {
     const node = this.getNode(nodeIndex);
     return node ? node.typeHint : 0; // Return 0 (no hint) for invalid index or if node not found?
   }
+
+  // Get all root node indices (nodes with no parent)
+  getRootIndices(): number[] {
+    const rootIndices: number[] = [];
+    for (let i = 0; i < this.nodes.length; i++) {
+      const node = this.nodes[i];
+      // In TypeScript implementation, check if node has no parent
+      // We need to check how parent is stored - likely through a parent property or by checking if it's a top-level object
+      if (node.type === 0 && !this.isChildOfAnyNode(i)) {
+        rootIndices.push(i);
+      }
+    }
+    return rootIndices;
+  }
+
+  private isChildOfAnyNode(nodeIndex: number): boolean {
+    // Check if this node is in any other node's children array
+    for (const node of this.nodes) {
+      if (node.children && node.children.includes(nodeIndex)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 // Integration Step: Update DOMBuilder to use this Navigator

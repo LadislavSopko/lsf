@@ -19,7 +19,12 @@ function encodeValue(value: any): { encoded: string | Uint8Array, typeHint?: str
         // No type hint needed for strings
         return { encoded: value };
     } else if (typeof value === 'number') {
-        return { encoded: String(value), typeHint: '$t~n' };
+        // Check if it's an integer or float
+        if (Number.isInteger(value)) {
+            return { encoded: String(value), typeHint: '$t~n' };
+        } else {
+            return { encoded: String(value), typeHint: '$t~f' };
+        }
     } else if (typeof value === 'boolean') {
         return { encoded: value ? 'true' : 'false', typeHint: '$t~b' };
     } else if (value === null) {

@@ -61,13 +61,18 @@ For EVERY task below, follow this loop:
 
 ## Phase 2: Fix TypeScript Implementation
 ### Run C# Reference Tests on TypeScript
-- [ ] Port multi-object tests to TypeScript
-- [ ] Run all tests - identify failures
-- [ ] Fix multi-object parsing bug
-  - [ ] CODE → TEST → FIX loop
-  - [ ] If stuck after 3-4 iterations: STOP, ask for help
-- [ ] Ensure all C# test scenarios pass in TypeScript
-- [ ] Run full test suite 3 times
+- [x] Port multi-object tests to TypeScript
+- [x] Run all tests - identify failures
+- [x] Fix multi-object parsing bug
+  - [x] CODE → TEST → FIX loop
+  - [x] If stuck after 3-4 iterations: STOP, ask for help
+- [x] Ensure all C# test scenarios pass in TypeScript
+- [x] Run full test suite 3 times
+
+**COMPLETED** ✅ - Fixed two bugs:
+1. **Encoder bug**: Float values now correctly get `$t~f` instead of `$t~n`
+2. **Multi-object bug**: Visitor now processes all root objects, returns array for multiple objects
+All 70 tests pass consistently.
 
 ## Phase 3: Replicate C# Tests to Other Languages
 ### Use C# as the Reference Implementation

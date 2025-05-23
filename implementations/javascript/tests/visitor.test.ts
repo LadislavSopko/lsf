@@ -76,14 +76,45 @@ describe('LSFToJSONVisitor', () => {
     expect(JSON.parse(actualJson)).toEqual(JSON.parse(expectedJson));
   });
 
-  it('should handle multiple objects (processes only first by default)', () => {
-      // Current buildJSON starts at parseResult.root (index of first obj)
-      // It doesn't process subsequent top-level objects yet.
-      // TODO: Enhance visitor or add top-level function to handle multiple objects if needed.
+  it('should handle multiple objects as array', () => {
+    // Now properly handles multiple objects
     const input = '$o~obj1$f~a$v~1$o~obj2$f~b$v~2';
-    const expectedJson = '{"a":"1"}'; // Only processes obj1
+    const expectedJson = '[{"a":"1"},{"b":"2"}]'; // Processes both objects as array
     const actualJson = parseAndGetJSON(input);
     expect(JSON.parse(actualJson)).toEqual(JSON.parse(expectedJson));
+  });
+
+  // Additional multi-object tests to match C# implementation
+  it('should handle multiple named objects as array', () => {
+    const input = '$o~user1$f~name$v~Alice$f~age$v~25$t~n$o~user2$f~name$v~Bob$f~age$v~30$t~n';
+    const actualJson = parseAndGetJSON(input);
+    const expected = [
+      { name: 'Alice', age: 25 },
+      { name: 'Bob', age: 30 }
+    ];
+    expect(JSON.parse(actualJson)).toEqual(expected);
+  });
+
+  it('should handle multiple anonymous objects as array', () => {
+    const input = '$o~$f~type$v~first$o~$f~type$v~second$o~$f~type$v~third';
+    const actualJson = parseAndGetJSON(input);
+    const expected = [
+      { type: 'first' },
+      { type: 'second' },
+      { type: 'third' }
+    ];
+    expect(JSON.parse(actualJson)).toEqual(expected);
+  });
+
+  it('should handle mixed named and anonymous objects', () => {
+    const input = '$o~Named1$f~type$v~named$o~$f~type$v~anonymous$o~Named2$f~type$v~named2';
+    const actualJson = parseAndGetJSON(input);
+    const expected = [
+      { type: 'named' },
+      { type: 'anonymous' },
+      { type: 'named2' }
+    ];
+    expect(JSON.parse(actualJson)).toEqual(expected);
   });
   
   it('should correctly escape strings', () => {
