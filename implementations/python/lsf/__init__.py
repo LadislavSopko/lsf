@@ -7,6 +7,7 @@ from .parser.dom_navigator import DOMNavigator
 from .parser.visitor import LSFToJSONVisitor
 from .parser.encoder import LSFEncoder
 from .parser.types import ParseResult, LSFNode
+from .parser.parser_options import ParserOptions
 
 
 def parse_to_dom(input_data: Union[str, bytes]) -> ParseResult:
@@ -32,31 +33,42 @@ def parse_to_dom(input_data: Union[str, bytes]) -> ParseResult:
     return DOMBuilder.build(tokens, buffer)
 
 
-def parse_to_json(input_data: Union[str, bytes]) -> Optional[str]:
+def parse_to_json(input_data: Union[str, bytes], options: Optional[ParserOptions] = None) -> Optional[str]:
     """
     Parse LSF data directly to JSON string.
     
     Args:
         input_data: LSF formatted string or bytes
+        options: Parser options (optional)
         
     Returns:
         JSON string or None on error
     """
-    # Add size limit check (10MB default)
-    max_size_mb = 10
-    max_size_bytes = max_size_mb * 1024 * 1024
+    if options is None:
+        options = ParserOptions.default()
     
+    # Check size limit
     if isinstance(input_data, str):
-        if len(input_data) > max_size_bytes:
-            raise ValueError(f"Input size exceeds maximum allowed size of {max_size_mb}MB")
+        if len(input_data) > options.max_input_size:
+            raise ValueError(f"Input size exceeds maximum allowed size of {options.max_input_size // (1024 * 1024)}MB")
         buffer = input_data.encode('utf-8')
     else:
-        if len(input_data) > max_size_bytes:
-            raise ValueError(f"Input size exceeds maximum allowed size of {max_size_mb}MB")
+        if len(input_data) > options.max_input_size:
+            raise ValueError(f"Input size exceeds maximum allowed size of {options.max_input_size // (1024 * 1024)}MB")
         buffer = input_data
     
-    # Parse to DOM
-    result = parse_to_dom(input_data)
+    # Parse to DOM with options
+    # Convert to bytes if string
+    if isinstance(input_data, str):
+        parse_buffer = input_data.encode('utf-8')
+    else:
+        parse_buffer = input_data
+    
+    # Scan tokens
+    tokens = TokenScanner.scan(parse_buffer)
+    
+    # Build DOM with options
+    result = DOMBuilder.build(tokens, parse_buffer, options)
     if not result.success or result.nodes is None:
         return None
     
@@ -102,4 +114,5 @@ __all__ = [
     'encode_to_bytes',
     'ParseResult',
     'LSFNode',
+    'ParserOptions',
 ]

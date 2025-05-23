@@ -6,19 +6,22 @@ import { DOMBuilder } from './parser/dom-builder';
 import { LSFToJSONVisitor } from './parser/visitor';
 import { encodeLSFToString, encodeLSFToArray } from './parser/encoder';
 import type { LSFNode, ParseResult, DOMNavigator as DOMNavigatorInterface } from './parser/types';
+import { ParserOptions, mergeOptions } from './parser/parser-options';
 
 // Re-export types
 export type { LSFNode, ParseResult, TokenInfo, DOMNavigator } from './parser/types';
+export type { ParserOptions } from './parser/parser-options';
 
 /**
  * Parse LSF string to DOM structure
  * @param input LSF formatted string
+ * @param options Parser options
  * @returns ParseResult with DOM navigator
  */
-export function parseToDom(input: string): ParseResult {
+export function parseToDom(input: string, options?: ParserOptions): ParseResult {
   const scanner = new TokenScanner();
   const scanResult = scanner.scan(input);
-  const builder = new DOMBuilder(scanResult);
+  const builder = new DOMBuilder(scanResult, options);
   return builder.buildDOM();
 }
 
@@ -37,18 +40,18 @@ export function parseToDomFromBytes(input: Uint8Array): ParseResult {
 /**
  * Parse LSF string directly to JSON string
  * @param input LSF formatted string
+ * @param options Parser options
  * @returns JSON string or null on error
  */
-export function parseToJsonString(input: string): string | null {
-  // Add size limit check (10MB default)
-  const maxSizeInMB = 10;
-  const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+export function parseToJsonString(input: string, options?: ParserOptions): string | null {
+  const opts = mergeOptions(options);
   
-  if (input.length > maxSizeInBytes) {
-    throw new Error(`Input size exceeds maximum allowed size of ${maxSizeInMB}MB`);
+  // Check size limit
+  if (input.length > opts.maxInputSize) {
+    throw new Error(`Input size exceeds maximum allowed size of ${opts.maxInputSize / (1024 * 1024)}MB`);
   }
   
-  const result = parseToDom(input);
+  const result = parseToDom(input, options);
   if (!result.navigator) {
     return null;
   }

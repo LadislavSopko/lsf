@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Zerox.LSF
 {
@@ -14,12 +13,24 @@ namespace Zerox.LSF
         private const int InvalidIndex = -1;
 
         /// <summary>
-        /// Builds the LSF DOM from scanned tokens.
+        /// Builds the LSF DOM from scanned tokens using default options.
         /// </summary>
         /// <param name="tokens">The list of tokens identified by the TokenScanner.</param>
         /// <param name="input">The original input byte span.</param>
         /// <returns>A ParseResult containing the list of LSFNodes or error information.</returns>
         public static ParseResult Build(List<TokenScanner.TokenInfo> tokens, ReadOnlySpan<byte> input)
+        {
+            return Build(tokens, input, LSFParserOptions.Default);
+        }
+
+        /// <summary>
+        /// Builds the LSF DOM from scanned tokens.
+        /// </summary>
+        /// <param name="tokens">The list of tokens identified by the TokenScanner.</param>
+        /// <param name="input">The original input byte span.</param>
+        /// <param name="options">Parser options.</param>
+        /// <returns>A ParseResult containing the list of LSFNodes or error information.</returns>
+        public static ParseResult Build(List<TokenScanner.TokenInfo> tokens, ReadOnlySpan<byte> input, LSFParserOptions options)
         {
             var nodes = new List<LSFNode>(tokens.Count > 0 ? tokens.Count + tokens.Count / 2 : InitialNodeCapacity); // Heuristic capacity
             int currentObjectParentIndex = InvalidIndex; // Track the index of the current $o~
@@ -77,7 +88,7 @@ namespace Zerox.LSF
                     case TokenType.TypeHint:
                         if (lastValueNodeIndex != InvalidIndex && dataLength > 0) // Hint must follow a value and have data
                         {
-                           ApplyTypeHint(ref nodes, lastValueNodeIndex, input.Slice(dataStart, dataLength));
+                           ApplyTypeHint(ref nodes, lastValueNodeIndex, input.Slice(dataStart, dataLength), options);
                         }
                         // Type hints don't create nodes and only apply once
                         lastValueNodeIndex = InvalidIndex; 
@@ -115,7 +126,7 @@ namespace Zerox.LSF
             return AddNode(ref nodes, type, associatedTokenPos, 0, 0, parentIdx);
         }
 
-        private static void ApplyTypeHint(ref List<LSFNode> nodes, int targetNodeIndex, ReadOnlySpan<byte> hintData)
+        private static void ApplyTypeHint(ref List<LSFNode> nodes, int targetNodeIndex, ReadOnlySpan<byte> hintData, LSFParserOptions options)
         {
             if (targetNodeIndex < 0 || targetNodeIndex >= nodes.Count) return;
 
@@ -146,7 +157,13 @@ namespace Zerox.LSF
                         nodeToUpdate.TypeHint = ValueHint.Null;
                         break;
                     default:
-                        throw new ArgumentException($"Invalid type hint '{(char)hintChar}' at position {nodes[targetNodeIndex].TokenPosition}. Valid types are: n, f, b, d, s");
+                        if (options.ValidateTypeHints)
+                        {
+                            throw new ArgumentException($"Invalid type hint '{(char)hintChar}' at position {nodes[targetNodeIndex].TokenPosition}. Valid types are: n, f, b, d, s");
+                        }
+                        // If validation is disabled, default to string
+                        nodeToUpdate.TypeHint = ValueHint.String;
+                        break;
                 }
             }
             // Update the node in the list

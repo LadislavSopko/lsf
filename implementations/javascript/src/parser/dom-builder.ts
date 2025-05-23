@@ -1,6 +1,7 @@
-import { LSFNode, ParseResult, TokenInfo, DOMNavigator } from './types';
-import { TokenScanResult, TokenScanner } from './token-scanner';
+import { LSFNode, ParseResult } from './types';
+import { TokenScanResult } from './token-scanner';
 import { DOMNavigator as DOMNavigatorClass } from './dom-navigator'; // Import the actual navigator
+import { ParserOptions, mergeOptions } from './parser-options';
 
 // Re-define CHAR_CODE or import from token-scanner if exported
 const CHAR_CODE = {
@@ -32,10 +33,12 @@ export class DOMBuilder {
   private currentFieldNodeIndex = -1;
   private lastValueNodeIndex = -1;
   private topLevelNodeIndices: number[] = [];
+  private options: Required<ParserOptions>;
 
-  constructor(tokenResult: TokenScanResult) {
+  constructor(tokenResult: TokenScanResult, options?: ParserOptions) {
     this.tokens = tokenResult;
     this.buffer = tokenResult.buffer;
+    this.options = mergeOptions(options);
 
     this.nodeCapacity = Math.max(DOMBuilder.MIN_CAPACITY, Math.ceil(tokenResult.count * DOMBuilder.NODE_ESTIMATE_FACTOR));
 
@@ -163,8 +166,11 @@ export class DOMBuilder {
                              if (typeChar === 'n' || typeChar === 'f' || typeChar === 'b' || 
                                  typeChar === 'd' || typeChar === 's' || typeChar === 'z') {
                                  valueNode.typeHint = typeHintByte;
-                             } else {
+                             } else if (this.options.validateTypeHints) {
                                  throw new Error(`Invalid type hint '${typeChar}' at position ${typeHintCharPos}. Valid types are: n, f, b, d, s`);
+                             } else {
+                                 // If validation is disabled, default to string (0)
+                                 valueNode.typeHint = 0;
                              }
                          } else {
                              console.warn(`Type hint character position overlaps with next token at index ${i}. Hint ignored.`);

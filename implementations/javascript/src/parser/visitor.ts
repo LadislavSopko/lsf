@@ -1,4 +1,4 @@
-import { LSFNode, ParseResult } from './types';
+import { ParseResult } from './types';
 import { DOMNavigator as DOMNavigatorClass } from './dom-navigator';
 import { NODE_TYPE } from './dom-builder'; // Need NODE_TYPE constants
 
@@ -34,10 +34,8 @@ export interface Visitor {
 export class LSFToJSONVisitor implements Visitor {
   private result: StringBuilder;
   private navigator: DOMNavigatorClass;
-  private parseResult: ParseResult;
 
   constructor(parseResult: ParseResult) {
-    this.parseResult = parseResult;
     this.navigator = parseResult.navigator as DOMNavigatorClass;
     // TODO: Estimate output size based on input buffer size or node count?
     this.result = new StringBuilder();

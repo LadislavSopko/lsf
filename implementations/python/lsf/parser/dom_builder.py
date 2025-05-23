@@ -1,31 +1,34 @@
 """DOM builder for LSF format."""
-from typing import List, Union, Optional, Tuple
+from typing import List, Optional, Tuple
 from .types import TokenInfo, TokenType, LSFNode, ParseResult, ValueHint
-from .token_scanner import TokenScanner
+from .parser_options import ParserOptions
 
 
 class DOMBuilder:
     """Builds a DOM tree from LSF tokens."""
     
     @staticmethod
-    def build(tokens: List[TokenInfo], buffer: bytes) -> ParseResult:
+    def build(tokens: List[TokenInfo], buffer: bytes, options: Optional[ParserOptions] = None) -> ParseResult:
         """
         Build DOM from tokens.
         
         Args:
             tokens: List of tokens from scanner
             buffer: Original input buffer
+            options: Parser options
             
         Returns:
             ParseResult with nodes or error
         """
+        if options is None:
+            options = ParserOptions.default()
+            
         if not tokens:
             return ParseResult(success=True, nodes=[])
             
         nodes: List[LSFNode] = []
         current_object_index = -1
         current_field_index = -1
-        orphaned_type_hint: Optional[Tuple[TokenInfo, int]] = None
         
         for token in tokens:
             if token.type == TokenType.OBJECT:
@@ -134,10 +137,13 @@ class DOMBuilder:
                         valid_hints = {ord('n'), ord('f'), ord('b'), ord('d'), ord('s'), ord('z')}
                         if hint_char in valid_hints:
                             nodes[-1].type_hint = ValueHint(hint_char)
-                        else:
+                        elif options.validate_type_hints:
                             raise ValueError(f"Invalid type hint '{chr(hint_char)}' at position {token.position}. Valid types are: n, f, b, d, s")
+                        else:
+                            # If validation is disabled, default to string
+                            nodes[-1].type_hint = ValueHint.STRING
                 else:
-                    # Orphaned type hint
-                    orphaned_type_hint = (token, len(nodes) - 1)
+                    # Orphaned type hint - ignore per LSF philosophy
+                    pass
         
         return ParseResult(success=True, nodes=nodes)

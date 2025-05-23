@@ -16,36 +16,55 @@ namespace Zerox.LSF
         #region Parsing Methods
 
         /// <summary>
-        /// Parses an LSF string directly into a JSON string representation.
+        /// Parses an LSF string directly into a JSON string representation using default options.
         /// </summary>
         /// <param name="lsfInput">The LSF string to parse.</param>
         /// <returns>A JSON string representation of the LSF data, or null if parsing fails or the root is not a valid object.</returns>
         public static string? ParseToJsonString(string lsfInput)
         {
+            return ParseToJsonString(lsfInput, LSFParserOptions.Default);
+        }
+
+        /// <summary>
+        /// Parses an LSF string directly into a JSON string representation.
+        /// </summary>
+        /// <param name="lsfInput">The LSF string to parse.</param>
+        /// <param name="options">Parser options.</param>
+        /// <returns>A JSON string representation of the LSF data, or null if parsing fails or the root is not a valid object.</returns>
+        public static string? ParseToJsonString(string lsfInput, LSFParserOptions options)
+        {
             if (string.IsNullOrEmpty(lsfInput)) return null;
             
-            // Add size limit check (10MB default)
-            const int maxSizeInMB = 10;
-            const int maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-            
-            if (lsfInput.Length > maxSizeInBytes)
+            // Check size limit from options
+            if (lsfInput.Length > options.MaxInputSize)
             {
-                throw new ArgumentException($"Input size exceeds maximum allowed size of {maxSizeInMB}MB");
+                throw new ArgumentException($"Input size exceeds maximum allowed size of {options.MaxInputSize / (1024 * 1024)}MB");
             }
             
             ReadOnlyMemory<byte> inputMemory = Utf8NoBom.GetBytes(lsfInput);
-            return ParseToJsonString(inputMemory);
+            return ParseToJsonString(inputMemory, options);
+        }
+
+        /// <summary>
+        /// Parses LSF data from a byte memory region directly into a JSON string representation using default options.
+        /// </summary>
+        /// <param name="lsfInputBytes">The ReadOnlyMemory&lt;byte&gt; containing LSF data.</param>
+        /// <returns>A JSON string representation of the LSF data, or null if parsing fails or the root is not a valid object.</returns>
+        public static string? ParseToJsonString(ReadOnlyMemory<byte> lsfInputBytes)
+        {
+            return ParseToJsonString(lsfInputBytes, LSFParserOptions.Default);
         }
 
         /// <summary>
         /// Parses LSF data from a byte memory region directly into a JSON string representation.
         /// </summary>
         /// <param name="lsfInputBytes">The ReadOnlyMemory&lt;byte&gt; containing LSF data.</param>
+        /// <param name="options">Parser options.</param>
         /// <returns>A JSON string representation of the LSF data, or null if parsing fails or the root is not a valid object.</returns>
-        public static string? ParseToJsonString(ReadOnlyMemory<byte> lsfInputBytes)
+        public static string? ParseToJsonString(ReadOnlyMemory<byte> lsfInputBytes, LSFParserOptions options)
         {
             var tokens = TokenScanner.Scan(lsfInputBytes.Span);
-            var parseResult = DOMBuilder.Build(tokens, lsfInputBytes.Span);
+            var parseResult = DOMBuilder.Build(tokens, lsfInputBytes.Span, options);
 
             if (!parseResult.Success || parseResult.Nodes == null || parseResult.Nodes.Count == 0)
             {
