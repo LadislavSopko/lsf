@@ -25,8 +25,8 @@ namespace Zerox.LSF
 
         /// <summary>
         /// Converts the LSF DOM provided by the navigator into a JSON string.
-        /// Assumes a single root object, as per strict LSF specification.
-        /// If multiple roots are found (due to implicit nodes), only the first is processed.
+        /// Handles multiple root objects as per LSF v3.0 specification.
+        /// Returns a JSON array if multiple roots exist, or a single object if only one root.
         /// </summary>
         /// <param name="navigator">The DOM navigator containing the parsed LSF.</param>
         /// <returns>A JSON string representation, or null if the DOM is empty or invalid.</returns>
@@ -38,22 +38,41 @@ namespace Zerox.LSF
                 return null; // No root node found
             }
 
-            // As per LSF spec, only one root object is strictly valid.
-            // We process the first root found.
-            int rootIndex = rootIndices[0];
-            var rootNode = navigator.GetNode(rootIndex);
-
-            // Check if the root is an Object. Accept implicit roots built by DOMBuilder.
-            if (rootNode.Type != TokenType.Object)
-            {
-                // Handle cases where the root isn't an object (shouldn't happen if builder guarantees root object?).
-                // Return null indicating unexpected structure.
-                return null; 
-            }
-
             var visitor = new LSFToJSONVisitor(navigator);
-            visitor.VisitObjectNode(rootIndex, rootNode);
-            return visitor._sb.ToString();
+
+            // Handle multiple root objects as per LSF v3.0 spec
+            if (rootIndices.Count == 1)
+            {
+                // Single root - return as single JSON object
+                int rootIndex = rootIndices[0];
+                var rootNode = navigator.GetNode(rootIndex);
+                if (rootNode.Type != TokenType.Object)
+                {
+                    return null;
+                }
+                visitor.VisitObjectNode(rootIndex, rootNode);
+                return visitor._sb.ToString();
+            }
+            else
+            {
+                // Multiple roots - return as JSON array
+                visitor._sb.Append('[');
+                bool firstRoot = true;
+                foreach (int rootIndex in rootIndices)
+                {
+                    var rootNode = navigator.GetNode(rootIndex);
+                    if (rootNode.Type != TokenType.Object)
+                    {
+                        continue; // Skip invalid roots
+                    }
+                    
+                    if (!firstRoot) visitor._sb.Append(',');
+                    visitor.VisitObjectNode(rootIndex, rootNode);
+                    firstRoot = false;
+                }
+                visitor._sb.Append(']');
+                return visitor._sb.ToString();
+            }
         }
 
         private void VisitObjectNode(int nodeIndex, LSFNode node)
