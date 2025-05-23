@@ -355,8 +355,8 @@ namespace Zerox.LSF.Tests
             Assert.Equal(TokenType.Object, obj1.Type);
             Assert.Equal(-1, obj1.ParentIndex); // Root level
             Assert.Equal("Obj1", GetData(obj1, lsf));
-            Assert.Single(obj1.ChildrenIndices);
-            Assert.Contains(1, obj1.ChildrenIndices);
+            Assert.Single(obj1.ChildrenIndices ?? Enumerable.Empty<int>().ToList());
+            Assert.Contains(1, obj1.ChildrenIndices ?? Enumerable.Empty<int>().ToList());
 
             // First field
             var field1 = nodes[1];
@@ -375,8 +375,8 @@ namespace Zerox.LSF.Tests
             Assert.Equal(TokenType.Object, obj2.Type);
             Assert.Equal(-1, obj2.ParentIndex); // Root level
             Assert.Equal("Obj2", GetData(obj2, lsf));
-            Assert.Single(obj2.ChildrenIndices);
-            Assert.Contains(4, obj2.ChildrenIndices);
+            Assert.Single(obj2.ChildrenIndices ?? Enumerable.Empty<int>().ToList());
+            Assert.Contains(4, obj2.ChildrenIndices ?? Enumerable.Empty<int>().ToList());
 
             // Second field
             var field2 = nodes[4];
